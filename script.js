@@ -5658,14 +5658,10 @@
         function initJourneyTab() {
             if (!currentProfile) return;
             
-            try {
-                updateJourneyStats();
-                renderAchievementTimeline();
-                updateCategoryProgress();
-                updateDailyInspiration();
-            } catch (error) {
-                console.error('여정 탭 초기화 오류:', error);
-            }
+            updateJourneyStats();
+            renderAchievementTimeline();
+            updateCategoryProgress();
+            updateDailyInspiration();
         }
         
         // 인사이트 탭 초기화  
@@ -5808,9 +5804,9 @@
         
         // ========== 여정 탭 실제 DOM 연결 함수들 ==========
         
-        // 여정 통계 업데이트 (실제 HTML ID와 연결)
+        // 여정 통계 업데이트
         function updateJourneyStats() {
-            if (!currentProfile) return;
+            if (!currentProfile || !currentProfile.bucketList) return;
             
             const goals = currentProfile.bucketList;
             const completed = goals.filter(g => g.completed);
@@ -5821,12 +5817,17 @@
             
             // 연속 달성 기록 계산
             let streak = 0;
-            const sortedCompleted = completed.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
-            for (let i = 0; i < sortedCompleted.length; i++) {
-                const completedDate = new Date(sortedCompleted[i].completedAt);
-                const daysDiff = Math.floor((new Date() - completedDate) / (1000 * 60 * 60 * 24));
-                if (daysDiff <= 30) streak++;
-                else break;
+            if (completed.length > 0) {
+                const sortedCompleted = completed
+                    .filter(goal => goal.completedAt)
+                    .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+                
+                for (let i = 0; i < sortedCompleted.length; i++) {
+                    const completedDate = new Date(sortedCompleted[i].completedAt);
+                    const daysDiff = Math.floor((new Date() - completedDate) / (1000 * 60 * 60 * 24));
+                    if (daysDiff <= 30) streak++;
+                    else break;
+                }
             }
             
             // 마일스톤 계산 (5개씩)
@@ -5842,13 +5843,13 @@
             if (journeyMilestonesEl) journeyMilestonesEl.textContent = milestones;
         }
         
-        // 달성 타임라인 렌더링
+        // 달성 타임라인 렌더링 (개선된 간결한 버전)
         function renderAchievementTimeline() {
             const container = document.getElementById('achievementTimeline');
             if (!container || !currentProfile) return;
             
             const completed = currentProfile.bucketList
-                .filter(goal => goal.completed)
+                .filter(goal => goal.completed && goal.completedAt)
                 .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
                 .slice(0, 10);
             
@@ -5883,6 +5884,11 @@
                 if (goal.completed) categoryStats[goal.category].completed++;
             });
             
+            if (Object.keys(categoryStats).length === 0) {
+                container.innerHTML = '<p class="empty-state">아직 목표가 없습니다. 새로운 목표를 추가해보세요!</p>';
+                return;
+            }
+            
             container.innerHTML = Object.entries(categoryStats).map(([category, stats]) => {
                 const percentage = Math.round((stats.completed / stats.total) * 100);
                 return `
@@ -5909,7 +5915,12 @@
                 { quote: "위대한 일을 하는 유일한 방법은 하는 일을 사랑하는 것이다.", author: "스티브 잡스" },
                 { quote: "성공은 목적지가 아니라 여정이다.", author: "아서 애시" },
                 { quote: "꿈을 이룰 수 있다고 믿는 순간, 그것은 현실이 된다.", author: "윌 스미스" },
-                { quote: "작은 걸음도 앞으로 나아가는 것이다.", author: "마틴 루터 킹" }
+                { quote: "작은 걸음도 앞으로 나아가는 것이다.", author: "마틴 루터 킹" },
+                { quote: "오늘 할 수 있는 일을 내일로 미루지 마라.", author: "벤자민 프랭클린" },
+                { quote: "모든 성취의 시작점은 열망이다.", author: "나폴레온 힐" },
+                { quote: "실패는 성공으로 가는 길에 있는 하나의 과정일 뿐이다.", author: "토마스 에디슨" },
+                { quote: "변화를 원한다면 먼저 자신이 그 변화가 되어야 한다.", author: "마하트마 간디" },
+                { quote: "중요한 것은 넘어지는 것이 아니라 다시 일어서는 것이다.", author: "콘퓨시어스" }
             ];
             
             const today = new Date().getDate();
