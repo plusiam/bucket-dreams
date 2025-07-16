@@ -1876,7 +1876,7 @@
             if (firstButton) firstButton.focus();
         }
 
-        // SNS 카드 생성 (완전 구현 버전)
+        // SNS 카드 생성 (개선된 버전) - 정확한 영역 캡처
         async function generateSNSCard(goalId, platform) {
             if (!currentProfile) {
                 showCardError('프로필을 찾을 수 없습니다.');
@@ -1889,30 +1889,59 @@
                 return;
             }
 
+            let tempContainer = null;
+            
             try {
                 showCardLoading(true);
                 
-                // 플랫폼별 카드 생성
-                const cardElement = await createCardElement(goal, platform);
+                // 개선된 카드 요소 생성
+                const cardElement = await createCardElementFixed(goal, platform);
                 
-                // HTML2Canvas로 이미지 생성
+                // 임시 컨테이너 생성 및 DOM에 추가
+                tempContainer = document.createElement('div');
+                tempContainer.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    z-index: 10000;
+                    opacity: 0;
+                    pointer-events: none;
+                    background: white;
+                    border-radius: 20px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                    overflow: hidden;
+                `;
+                tempContainer.appendChild(cardElement);
+                document.body.appendChild(tempContainer);
+                
+                // 렌더링 완료 대기
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // HTML2Canvas로 카드만 정확히 캡처
                 const canvas = await html2canvas(cardElement, {
-                    backgroundColor: null,
-                    scale: 2, // 고해상도를 위한 2배 스케일링
+                    backgroundColor: '#ffffff',
+                    scale: 2,
                     useCORS: true,
                     allowTaint: true,
                     logging: false,
                     width: cardElement.offsetWidth,
                     height: cardElement.offsetHeight,
                     windowWidth: cardElement.offsetWidth,
-                    windowHeight: cardElement.offsetHeight
+                    windowHeight: cardElement.offsetHeight,
+                    x: 0,
+                    y: 0,
+                    scrollX: 0,
+                    scrollY: 0
                 });
                 
                 // PNG로 변환 및 다운로드
                 const link = document.createElement('a');
-                link.download = `${goal.text.replace(/[^a-zA-Z0-9가-힣]/g, '_')}_${platform}_카드.png`;
-                link.href = canvas.toDataURL('image/png');
+                const filename = `${goal.text.replace(/[^a-zA-Z0-9가-힣]/g, '_')}_${platform}_카드.png`;
+                link.download = filename;
+                link.href = canvas.toDataURL('image/png', 0.95);
                 
+                // 다운로드 실행
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -1921,8 +1950,12 @@
                 
             } catch (error) {
                 console.error('카드 생성 오류:', error);
-                showCardError('카드 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+                showCardError(`카드 생성 중 오류가 발생했습니다: ${error.message}`);
             } finally {
+                // 임시 컨테이너 정리
+                if (tempContainer && document.body.contains(tempContainer)) {
+                    document.body.removeChild(tempContainer);
+                }
                 showCardLoading(false);
             }
         }
@@ -2043,16 +2076,8 @@
             });
         }
 
-        // 카드 요소 생성 함수
-        async function createCardElement(goal, platform) {
-            const hiddenArea = document.getElementById('hiddenCardArea');
-            if (!hiddenArea) {
-                throw new Error('카드 생성 영역을 찾을 수 없습니다.');
-            }
-            
-            // 기존 카드 제거
-            hiddenArea.innerHTML = '';
-            
+        // 개선된 카드 요소 생성 함수 - 독립적인 요소 생성
+        async function createCardElementFixed(goal, platform) {
             // 플랫폼별 카드 크기 설정
             const dimensions = getDimensionsByPlatform(platform);
             
@@ -2065,66 +2090,158 @@
                 imageStyle = await getSmartImageStyle(goal.image, dimensions.width, layoutConfig.imageHeight);
             }
             
-            // 카드 HTML 생성
-            const cardHtml = `
-                <div class="achievement-card ${goal.category}" style="width: ${dimensions.width}px; height: ${dimensions.height}px;">
-                    <div class="achievement-card-content">
-                        <div class="achievement-header" style="padding: ${layoutConfig.headerPadding};">
-                            <div class="achievement-title" style="font-size: ${layoutConfig.titleSize};">${escapeHtml(goal.text)}</div>
-                            <div class="achievement-category">${getCategoryDisplayName(goal.category)}</div>
-                            <div class="achievement-date">달성일: ${formatDate(goal.completedDate)}</div>
-                        </div>
-                        
-                        ${goal.image ? `
-                            <div class="achievement-image-container" style="height: ${layoutConfig.imageHeight}px;">
-                                <img src="${goal.image}" alt="달성 인증 사진" class="achievement-image" style="
-                                    width: ${imageStyle.width};
-                                    height: ${imageStyle.height};
-                                    object-fit: ${imageStyle.objectFit};
-                                    object-position: ${imageStyle.objectPosition};
-                                ">
-                            </div>
-                        ` : ''}
-                        
-                        <div class="achievement-body" style="padding: ${layoutConfig.bodyPadding};">
-                            <div class="achievement-note" style="font-size: ${layoutConfig.noteSize};">
-                                ${goal.note ? `"${escapeHtml(goal.note)}"` : ''}
-                            </div>
-                        </div>
-                        
-                        <div class="achievement-footer" style="padding: ${layoutConfig.footerPadding};">
-                            <div class="achievement-user">
-                                <div class="user-name">${escapeHtml(currentProfile.name)}</div>
-                                <div class="user-subtitle">버킷리스트 달성</div>
-                            </div>
-                            <div class="achievement-branding">
-                                <div class="brand-name">🎯 Bucket Dreams</div>
-                                <div class="brand-subtitle">나의 버킷리스트</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            // 카드 요소 직접 생성
+            const cardElement = document.createElement('div');
+            cardElement.className = `achievement-card ${goal.category}`;
+            cardElement.style.cssText = `
+                width: ${dimensions.width}px;
+                height: ${dimensions.height}px;
+                border-radius: 20px;
+                overflow: hidden;
+                background: white;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                position: relative;
             `;
             
-            hiddenArea.innerHTML = cardHtml;
-            const cardElement = hiddenArea.querySelector('.achievement-card');
+            // 카테고리별 배경 그라데이션 설정
+            const categoryStyles = {
+                'travel': 'linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%)',
+                'hobby': 'linear-gradient(135deg, #E8F5E9 0%, #F1F8E9 100%)',
+                'career': 'linear-gradient(135deg, #EDE7F6 0%, #F3E5F5 100%)',
+                'relationship': 'linear-gradient(135deg, #FFF8E1 0%, #FFEBEE 100%)',
+                'health': 'linear-gradient(135deg, #E0F7FA 0%, #FFF9C4 100%)',
+                'other': 'linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%)'
+            };
+            cardElement.style.background = categoryStyles[goal.category] || categoryStyles['other'];
             
-            // 이미지 로딩 대기
-            const images = cardElement.querySelectorAll('img');
-            if (images.length > 0) {
-                await Promise.all(Array.from(images).map(img => {
-                    return new Promise((resolve, reject) => {
-                        if (img.complete) {
-                            resolve();
-                        } else {
-                            img.onload = resolve;
-                            img.onerror = reject;
-                        }
-                    });
-                }));
+            // 상단 액센트 바
+            const accentBar = document.createElement('div');
+            accentBar.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 5px;
+                background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+                z-index: 10;
+            `;
+            cardElement.appendChild(accentBar);
+            
+            // 카드 콘텐츠 컨테이너
+            const contentContainer = document.createElement('div');
+            contentContainer.style.cssText = `
+                position: relative;
+                z-index: 2;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                padding: 0;
+            `;
+            
+            // 헤더 생성
+            const header = document.createElement('div');
+            header.style.cssText = `
+                padding: ${layoutConfig.headerPadding};
+                text-align: left;
+                background: white;
+            `;
+            header.innerHTML = `
+                <div style="font-size: ${layoutConfig.titleSize}; font-weight: 700; margin-bottom: 8px; color: #1a1a1a; line-height: 1.3;">${escapeHtml(goal.text)}</div>
+                <div style="font-size: 0.85rem; font-weight: 600; color: #666; margin-bottom: 5px;">${getCategoryDisplayName(goal.category)}</div>
+                <div style="font-size: 0.9rem; color: #666;">달성일: ${formatDate(goal.completedDate)}</div>
+            `;
+            contentContainer.appendChild(header);
+            
+            // 이미지 컨테이너 (있는 경우)
+            if (goal.image) {
+                const imageContainer = document.createElement('div');
+                imageContainer.style.cssText = `
+                    height: ${layoutConfig.imageHeight}px;
+                    overflow: hidden;
+                    background: #f5f5f5;
+                `;
+                
+                const img = document.createElement('img');
+                img.src = goal.image;
+                img.alt = '달성 인증 사진';
+                img.style.cssText = `
+                    width: ${imageStyle.width || '100%'};
+                    height: ${imageStyle.height || '100%'};
+                    object-fit: ${imageStyle.objectFit || 'cover'};
+                    object-position: ${imageStyle.objectPosition || 'center'};
+                `;
+                
+                imageContainer.appendChild(img);
+                contentContainer.appendChild(imageContainer);
+                
+                // 이미지 로딩 대기
+                await new Promise((resolve, reject) => {
+                    if (img.complete) {
+                        resolve();
+                    } else {
+                        img.onload = resolve;
+                        img.onerror = reject;
+                        setTimeout(resolve, 3000); // 3초 타임아웃
+                    }
+                });
             }
             
+            // 본문 생성
+            const body = document.createElement('div');
+            body.style.cssText = `
+                flex: 1;
+                padding: ${layoutConfig.bodyPadding};
+                background: white;
+                display: flex;
+                flex-direction: column;
+            `;
+            
+            if (goal.note) {
+                const note = document.createElement('div');
+                note.style.cssText = `
+                    font-size: ${layoutConfig.noteSize};
+                    line-height: 1.6;
+                    color: #333;
+                    font-style: italic;
+                    margin-bottom: 20px;
+                `;
+                note.textContent = `"${goal.note}"`;
+                body.appendChild(note);
+            }
+            
+            contentContainer.appendChild(body);
+            
+            // 푸터 생성
+            const footer = document.createElement('div');
+            footer.style.cssText = `
+                padding: ${layoutConfig.footerPadding};
+                background: white;
+                border-top: 1px solid #f0f0f0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            `;
+            footer.innerHTML = `
+                <div>
+                    <div style="font-size: 1.1rem; font-weight: 600; color: #1a1a1a; margin-bottom: 2px;">${escapeHtml(currentProfile.name)}</div>
+                    <div style="font-size: 0.85rem; color: #666;">버킷리스트 달성</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 1rem; font-weight: 600; color: #4facfe; margin-bottom: 2px;">🎯 Bucket Dreams</div>
+                    <div style="font-size: 0.8rem; color: #888;">나의 버킷리스트</div>
+                </div>
+            `;
+            contentContainer.appendChild(footer);
+            
+            cardElement.appendChild(contentContainer);
+            
             return cardElement;
+        }
+
+        // 기존 카드 요소 생성 함수 (하위 호환성)
+        async function createCardElement(goal, platform) {
+            return await createCardElementFixed(goal, platform);
         }
 
         // 카테고리 표시명 반환
@@ -2150,7 +2267,7 @@
             });
         }
 
-        // 카드 로딩 상태 표시
+        // 개선된 카드 로딩 상태 표시
         function showCardLoading(isLoading) {
             let loadingElement = document.getElementById('cardLoadingIndicator');
             
@@ -2161,37 +2278,73 @@
                     loadingElement.innerHTML = `
                         <div style="
                             position: fixed;
-                            top: 50%;
-                            left: 50%;
-                            transform: translate(-50%, -50%);
-                            background: rgba(255, 255, 255, 0.95);
-                            padding: 30px;
-                            border-radius: 15px;
-                            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-                            z-index: 10000;
-                            text-align: center;
-                            backdrop-filter: blur(10px);
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: rgba(0, 0, 0, 0.7);
+                            z-index: 15000;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            backdrop-filter: blur(8px);
                         ">
                             <div style="
-                                width: 50px;
-                                height: 50px;
-                                border: 4px solid #f3f3f3;
-                                border-top: 4px solid #4facfe;
-                                border-radius: 50%;
-                                animation: spin 1s linear infinite;
-                                margin: 0 auto 15px;
-                            "></div>
-                            <div style="color: #333; font-size: 16px; font-weight: 500;">
-                                카드 생성 중...
-                            </div>
-                            <div style="color: #666; font-size: 14px; margin-top: 5px;">
-                                잠시만 기다려주세요
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                padding: 40px;
+                                border-radius: 20px;
+                                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+                                text-align: center;
+                                color: white;
+                                min-width: 300px;
+                            ">
+                                <div style="
+                                    width: 60px;
+                                    height: 60px;
+                                    border: 4px solid rgba(255, 255, 255, 0.3);
+                                    border-top: 4px solid white;
+                                    border-radius: 50%;
+                                    animation: spin 1s linear infinite;
+                                    margin: 0 auto 20px;
+                                "></div>
+                                <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">
+                                    🎯 카드 생성 중
+                                </div>
+                                <div style="font-size: 14px; opacity: 0.9; line-height: 1.4;">
+                                    고품질 이미지를 생성하고 있습니다<br>
+                                    잠시만 기다려주세요...
+                                </div>
+                                <div style="
+                                    width: 100%;
+                                    height: 4px;
+                                    background: rgba(255, 255, 255, 0.3);
+                                    border-radius: 2px;
+                                    margin-top: 20px;
+                                    overflow: hidden;
+                                ">
+                                    <div style="
+                                        width: 100%;
+                                        height: 100%;
+                                        background: linear-gradient(90deg, transparent 0%, white 50%, transparent 100%);
+                                        animation: progress 2s ease-in-out infinite;
+                                    "></div>
+                                </div>
                             </div>
                         </div>
                     `;
                     document.body.appendChild(loadingElement);
                 }
                 loadingElement.style.display = 'block';
+                
+                // 접근성: 스크린 리더에 알림
+                const announcement = document.createElement('div');
+                announcement.setAttribute('aria-live', 'polite');
+                announcement.setAttribute('aria-atomic', 'true');
+                announcement.className = 'sr-only';
+                announcement.textContent = '카드 생성을 시작합니다';
+                document.body.appendChild(announcement);
+                setTimeout(() => document.body.removeChild(announcement), 1000);
+                
             } else {
                 if (loadingElement) {
                     loadingElement.style.display = 'none';
@@ -2199,76 +2352,150 @@
             }
         }
 
-        // 카드 성공 알림
+        // 개선된 카드 성공 알림
         function showCardSuccess(message) {
             const successElement = document.createElement('div');
             successElement.innerHTML = `
                 <div style="
                     position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
+                    top: 20px;
+                    right: 20px;
                     background: linear-gradient(135deg, #28a745, #20c997);
                     color: white;
-                    padding: 20px 30px;
-                    border-radius: 15px;
-                    box-shadow: 0 10px 40px rgba(40, 167, 69, 0.3);
-                    z-index: 10001;
-                    text-align: center;
+                    padding: 20px 25px;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 40px rgba(40, 167, 69, 0.4);
+                    z-index: 15001;
+                    min-width: 300px;
                     backdrop-filter: blur(10px);
-                    animation: fadeInScale 0.3s ease-out;
+                    animation: slideInRight 0.4s ease-out;
                 ">
-                    <div style="font-size: 24px; margin-bottom: 10px;">✅</div>
-                    <div style="font-size: 16px; font-weight: 500;">
-                        ${message}
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="
+                            width: 40px;
+                            height: 40px;
+                            background: rgba(255, 255, 255, 0.2);
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 20px;
+                        ">✅</div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">
+                                카드 생성 완료!
+                            </div>
+                            <div style="font-size: 14px; opacity: 0.9;">
+                                ${message}
+                            </div>
+                        </div>
+                        <button onclick="this.parentElement.parentElement.remove()" style="
+                            background: none;
+                            border: none;
+                            color: white;
+                            font-size: 18px;
+                            cursor: pointer;
+                            padding: 5px;
+                            opacity: 0.7;
+                        ">×</button>
                     </div>
                 </div>
             `;
             
             document.body.appendChild(successElement);
             
+            // 접근성: 스크린 리더에 알림
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.className = 'sr-only';
+            announcement.textContent = `성공: ${message}`;
+            document.body.appendChild(announcement);
+            setTimeout(() => document.body.removeChild(announcement), 1000);
+            
+            // 자동 제거
             setTimeout(() => {
-                successElement.style.animation = 'fadeOutScale 0.3s ease-in';
-                setTimeout(() => {
-                    document.body.removeChild(successElement);
-                }, 300);
-            }, 3000);
+                if (document.body.contains(successElement)) {
+                    successElement.style.animation = 'slideOutRight 0.3s ease-in';
+                    setTimeout(() => {
+                        if (document.body.contains(successElement)) {
+                            document.body.removeChild(successElement);
+                        }
+                    }, 300);
+                }
+            }, 5000);
         }
 
-        // 카드 에러 알림
+        // 개선된 카드 에러 알림
         function showCardError(message) {
             const errorElement = document.createElement('div');
             errorElement.innerHTML = `
                 <div style="
                     position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
+                    top: 20px;
+                    right: 20px;
                     background: linear-gradient(135deg, #dc3545, #c82333);
                     color: white;
-                    padding: 20px 30px;
-                    border-radius: 15px;
-                    box-shadow: 0 10px 40px rgba(220, 53, 69, 0.3);
-                    z-index: 10001;
-                    text-align: center;
+                    padding: 20px 25px;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 40px rgba(220, 53, 69, 0.4);
+                    z-index: 15001;
+                    min-width: 300px;
                     backdrop-filter: blur(10px);
-                    animation: fadeInScale 0.3s ease-out;
+                    animation: slideInRight 0.4s ease-out;
                 ">
-                    <div style="font-size: 24px; margin-bottom: 10px;">❌</div>
-                    <div style="font-size: 16px; font-weight: 500;">
-                        ${message}
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="
+                            width: 40px;
+                            height: 40px;
+                            background: rgba(255, 255, 255, 0.2);
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 20px;
+                        ">⚠️</div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">
+                                카드 생성 실패
+                            </div>
+                            <div style="font-size: 14px; opacity: 0.9; line-height: 1.3;">
+                                ${message}
+                            </div>
+                        </div>
+                        <button onclick="this.parentElement.parentElement.remove()" style="
+                            background: none;
+                            border: none;
+                            color: white;
+                            font-size: 18px;
+                            cursor: pointer;
+                            padding: 5px;
+                            opacity: 0.7;
+                        ">×</button>
                     </div>
                 </div>
             `;
             
             document.body.appendChild(errorElement);
             
+            // 접근성: 스크린 리더에 알림
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'assertive');
+            announcement.className = 'sr-only';
+            announcement.textContent = `오류: ${message}`;
+            document.body.appendChild(announcement);
+            setTimeout(() => document.body.removeChild(announcement), 1000);
+            
+            // 자동 제거
             setTimeout(() => {
-                errorElement.style.animation = 'fadeOutScale 0.3s ease-in';
-                setTimeout(() => {
-                    document.body.removeChild(errorElement);
-                }, 300);
-            }, 4000);
+                if (document.body.contains(errorElement)) {
+                    errorElement.style.animation = 'slideOutRight 0.3s ease-in';
+                    setTimeout(() => {
+                        if (document.body.contains(errorElement)) {
+                            document.body.removeChild(errorElement);
+                        }
+                    }, 300);
+                }
+            }, 6000);
         }
 
         // 데이터 내보내기 (에러 처리 강화)
