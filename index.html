@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나의 버킷리스트</title>
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIuuCmOydmCDrsoTsgrHrpqzsirDtirgiLAogICJzaG9ydF9uYW1lIjogIuuyhOyCreDwJHRhvEhhdmvOr0dpTyIsCiAgImRlc2NyaXB0aW9uIjogIuydscDGDeyWReEhCKRZP2JCJOyGNeygz+ydBQUZQIOm2yC8JCl0dLXs2AyY6xKrQ1BBTiLAogICJzdGFydF91cmwiOiAiLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZmZmZmZiIsCiAgInRoZW1lX2NvbG9yIjogIiM0ZmFjZmUiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI2YVdSMGFEMGlNakEwSWlCb1pXbG5hSFE5SWpJd05DSWdkbWxsZDBKdmVEMGlNQ0F3SURJd05DQXlNRFFpSUdacGJHdzlJaU5tWm1ZaUlHOXRibTQ5SW1SQWMzbHRZbTlzYVc1bFFHRjRVblpwWVU1dVpOUThheXdRMFhBVnZaUWhxZERrY2pqZ1JNdjhLV0ZYbGlSbkNpbzNLU1YzZm5ReDJZc3l4cGhXQ1NDQWJIUVhsbUFCNGcydWF1VHJOejdIVjFGcXZLOVhGWWIiCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICAgIH0KICBdCn0=">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- 프로필 선택 화면 -->
+    <div class="profile-selector" id="profileSelector">
+        <h1>🎯 버킷리스트</h1>
+        <p>사용자를 선택하거나 새로 시작하세요</p>
+        
+        <div class="profile-options" id="profileOptions">
+            <!-- 기존 프로필들과 새 사용자 옵션이 여기에 동적 생성됩니다 -->
+        </div>
+    </div>
+
+    <!-- 메인 앱 화면 -->
+    <div class="container main-app" id="mainApp">
+        <div class="header">
+            <div class="header-content">
+                <h1 id="headerTitle">🎯 나의 버킷리스트</h1>
+                <p>인생에서 꼭 해보고 싶은 것들을 기록하고 달성해보세요</p>
+            </div>
+            <div class="header-controls">
+                <button class="header-btn" id="settingsBtn">⚙️ 이미지 설정</button>
+                <button class="header-btn" id="userSwitchBtn">👥 사용자 전환</button>
+                <button class="header-btn" id="finishBtn">🚪 사용 완료</button>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="goals">📝 목표 관리</button>
+            <button class="nav-tab" data-tab="gallery">🏆 완료 갤러리</button>
+            <button class="nav-tab" data-tab="data">💾 데이터 관리</button>
+        </div>
+
+        <!-- 목표 관리 탭 -->
+        <div class="tab-content active" id="goals-tab">
+            <div class="controls">
+                <div class="add-form">
+                    <div class="form-group">
+                        <label for="goalInput">목표</label>
+                        <input type="text" id="goalInput" placeholder="예: 오로라 보기, 마라톤 완주하기">
+                    </div>
+                    <div class="form-group">
+                        <label for="categorySelect">카테고리</label>
+                        <select id="categorySelect">
+                            <option value="travel">🌍 여행</option>
+                            <option value="hobby">🎨 취미</option>
+                            <option value="career">💼 커리어</option>
+                            <option value="relationship">👥 인간관계</option>
+                            <option value="health">💪 건강</option>
+                            <option value="other">✨ 기타</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="addGoalBtn">추가</button>
+                </div>
+
+                <div class="filters">
+                    <div class="filter-btn active" data-category="all">전체</div>
+                    <div class="filter-btn" data-category="travel">🌍 여행</div>
+                    <div class="filter-btn" data-category="hobby">🎨 취미</div>
+                    <div class="filter-btn" data-category="career">💼 커리어</div>
+                    <div class="filter-btn" data-category="relationship">👥 인간관계</div>
+                    <div class="filter-btn" data-category="health">💪 건강</div>
+                    <div class="filter-btn" data-category="other">✨ 기타</div>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalCount">0</div>
+                        <div class="stat-label">총 목표</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="completedCount">0</div>
+                        <div class="stat-label">완료</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="progressPercent">0%</div>
+                        <div class="stat-label">진행률</div>
+                    </div>
+                </div>
+
+                <div class="bucket-list" id="bucketList">
+                    <div class="empty-state">
+                        <h3>아직 목표가 없습니다</h3>
+                        <p>첫 번째 버킷리스트를 추가해보세요!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="download-section">
+                <button class="btn btn-secondary" id="downloadPdfBtn">📄 전체 리스트 PDF 다운로드</button>
+            </div>
+        </div>
+
+        <!-- 완료 갤러리 탭 -->
+        <div class="tab-content" id="gallery-tab">
+            <div class="content">
+                <div class="sort-controls">
+                    <span class="sort-label">정렬:</span>
+                    <select class="sort-select" id="gallerySort">
+                        <option value="date-desc">최신 완료순</option>
+                        <option value="date-asc">오래된 완료순</option>
+                        <option value="category">카테고리별</option>
+                    </select>
+                </div>
+                
+                <div class="gallery-grid" id="galleryGrid">
+                    <div class="empty-state">
+                        <h3>완료된 목표가 없습니다</h3>
+                        <p>첫 번째 목표를 달성해보세요!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 데이터 관리 탭 -->
+        <div class="tab-content" id="data-tab">
+            <div class="content">
+                <div class="profile-management">
+                    <h3 style="margin-bottom: 15px;">👤 프로필 관리</h3>
+                    <div class="data-management">
+                        <button class="btn btn-success" id="exportBtn">📤 내 데이터 내보내기</button>
+                        <button class="btn btn-info" id="importBtn">📥 데이터 가져오기</button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                        <button class="btn btn-warning" id="profileManagerBtn">⚙️ 프로필 관리</button>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <h4 style="margin-bottom: 10px; color: #dc3545;">🗑️ 데이터 삭제</h4>
+                        <div class="data-management">
+                            <button class="btn btn-warning" id="clearDataBtn">🔄 내 목표 모두 삭제</button>
+                            <button class="btn btn-danger" id="deleteProfileBtn">❌ 내 프로필 삭제</button>
+                            <button class="btn btn-danger btn-danger-extreme" id="clearAllBtn">💥 모든 프로필 삭제</button>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #dc3545; margin-top: 8px; text-align: center;">
+                            ⚠️ 삭제된 데이터는 복구할 수 없습니다. 신중히 선택하세요.
+                        </div>
+                    </div>
+                    
+                    <div class="profile-list" id="profileList">
+                        <!-- 프로필 목록이 여기에 동적 생성됩니다 -->
+                    </div>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <h3 style="margin-bottom: 15px;">💡 공용 기기 사용 팁</h3>
+                    <ul style="color: #6c757d; line-height: 1.6;">
+                        <li><strong>개인 데이터 보호:</strong> 각자의 프로필로 독립적인 데이터 관리</li>
+                        <li><strong>파일 백업:</strong> 개인 JSON 파일로 안전하게 데이터 보관</li>
+                        <li><strong>자동 로그아웃:</strong> 30분 비활성 시 자동으로 사용자 선택 화면으로 이동</li>
+                        <li><strong>사용 완료:</strong> 다 사용한 후에는 "사용 완료" 버튼으로 안전하게 종료</li>
+                        <li><strong>게스트 모드:</strong> 임시 사용자는 데이터가 저장되지 않음</li>
+                        <li><strong>데이터 정리:</strong> 필요 시 목표만 삭제하거나 프로필 전체 삭제 가능</li>
+                    </ul>
+                </div>
+
+                <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-top: 15px; border-left: 4px solid #ffc107;">
+                    <h4 style="margin-bottom: 10px; color: #856404;">⚠️ 데이터 삭제 안내</h4>
+                    <ul style="color: #856404; line-height: 1.5; font-size: 0.9rem;">
+                        <li><strong>내 목표 모두 삭제:</strong> 현재 프로필의 버킷리스트만 삭제 (프로필은 유지)</li>
+                        <li><strong>내 프로필 삭제:</strong> 현재 프로필과 모든 데이터 완전 삭제</li>
+                        <li><strong>모든 프로필 삭제:</strong> 앱의 모든 사용자 데이터 완전 초기화</li>
+                        <li><strong>⚠️ 주의:</strong> 삭제된 데이터는 복구할 수 없으니 백업 후 진행하세요</li>
+                    </ul>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 15px;">📊 현재 프로필 데이터</h3>
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="dataStatsTotal">0</div>
+                            <div class="stat-label">총 목표 수</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="dataStatsCompleted">0</div>
+                            <div class="stat-label">완료된 목표</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="dataStatsSize">0KB</div>
+                            <div class="stat-label">데이터 크기</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자동 로그아웃 알림 -->
+    <div class="auto-logout-notice" id="autoLogoutNotice">
+        <span id="autoLogoutText">5분 후 자동 로그아웃됩니다</span>
+        <button id="extendBtn">연장</button>
+    </div>
+
+    <!-- 완료/편집 모달 (날짜 입력 기능 포함) -->
+    <div class="modal" id="completionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">🎉 목표 달성!</div>
+                <div class="modal-subtitle" id="modalSubtitle">이 순간의 느낌을 기록해보세요</div>
+            </div>
+            <div class="modal-form">
+                <label for="completionDate">달성 날짜</label>
+                <input type="date" id="completionDate">
+                <label for="completionNote">달성 후기</label>
+                <textarea id="completionNote" placeholder="어떤 기분이었나요? 어떤 경험이었는지 간단히 적어보세요."></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-cancel" id="cancelModalBtn">취소</button>
+                <button class="btn-modal btn-confirm" id="saveModalBtn">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 새 사용자 모달 -->
+    <div class="modal" id="newUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">👋 새 사용자</div>
+                <div class="modal-subtitle">버킷리스트에 표시할 이름을 입력해주세요</div>
+            </div>
+            <div class="modal-form">
+                <input type="text" id="newUserNameInput" placeholder="예: 홍길동">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-cancel" id="cancelNewUserBtn">취소</button>
+                <button class="btn-modal btn-confirm" id="createUserBtn">생성</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 프로필 관리 모달 -->
+    <div class="modal" id="profileManagerModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <div class="modal-title">⚙️ 프로필 관리</div>
+                <div class="modal-subtitle">저장된 사용자 프로필을 관리합니다</div>
+            </div>
+            <div id="profileManagerContent">
+                <!-- 프로필 관리 내용이 여기에 동적 생성됩니다 -->
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-cancel" id="closeProfileManagerBtn">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PWA 설치 버튼 -->
+    <button class="install-btn" id="installBtn">📱 앱 설치</button>
+
+    <!-- 개별 카드 다운로드용 숨겨진 영역 -->
+    <div id="hiddenCardArea" style="position: absolute; left: -9999px; top: -9999px;"></div>
+    
+    <!-- 제작자 정보 -->
+    <div style="
+        position: fixed;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.75rem;
+        color: #999;
+        text-align: center;
+        z-index: 50;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 5px 15px;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    ">
+        <span>Made with ❤️ by 룰루랄라 한기쌤</span>
+        <a href="https://www.facebook.com/playrurulala" target="_blank" style="
+            color: #1877f2;
+            text-decoration: none;
+            margin-left: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        " id="fbLink">
+            <span style="font-size: 0.9rem;">f</span> Facebook
+        </a>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
