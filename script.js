@@ -154,8 +154,177 @@
             return text.replace(/[&<>"']/g, m => map[m]);
         }
 
-        // 이미지 압축 함수 (Canvas 사용)
-        function compressImage(file, maxWidth = 1200, quality = 0.8) {
+        // 이미지 설정 불러오기 (안전한 기본값 복원 로직 강화)
+        function loadImageSettings() {
+            const saved = safeLocalStorage('get', 'imageSettings');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    
+                    // 설정값 유효성 검사
+                    const validated = validateImageSettings(parsed);
+                    if (validated) {
+                        return { ...defaultImageSettings, ...validated };
+                    }
+                    
+                    console.warn('잘못된 이미지 설정 값 발견, 기본값 사용');
+                    showSettingsFeedback('설정값에 문제가 있어 기본값을 사용합니다', 'warning');
+                } catch (e) {
+                    console.error('이미지 설정 로드 실패:', e);
+                    showSettingsFeedback('설정 로드 실패, 기본값 사용', 'error');
+                }
+            }
+            return { ...defaultImageSettings };
+        }
+
+        // 이미지 설정 유효성 검사
+        function validateImageSettings(settings) {
+            if (!settings || typeof settings !== 'object') return null;
+            
+            const validated = {};
+            
+            // 품질 검사 (0.1~1.0)
+            if (typeof settings.quality === 'number' && settings.quality >= 0.1 && settings.quality <= 1.0) {
+                validated.quality = settings.quality;
+            }
+            
+            // 최대 너비 검사 (480~4096)
+            if (typeof settings.maxWidth === 'number' && settings.maxWidth >= 480 && settings.maxWidth <= 4096) {
+                validated.maxWidth = settings.maxWidth;
+            }
+            
+            // 형식 검사
+            if (typeof settings.format === 'string' && ['jpeg', 'webp', 'png'].includes(settings.format)) {
+                validated.format = settings.format;
+            }
+            
+            // 자동 압축 검사
+            if (typeof settings.autoCompress === 'boolean') {
+                validated.autoCompress = settings.autoCompress;
+            }
+            
+            // 카메라 해상도 검사
+            if (typeof settings.cameraResolution === 'string' && ['hd', 'fhd', '4k'].includes(settings.cameraResolution)) {
+                validated.cameraResolution = settings.cameraResolution;
+            }
+            
+            return validated;
+        }
+
+        // 이미지 설정 자동 저장 (강화된 오류 처리)
+        function saveImageSettingsAuto() {
+            try {
+                const settingsToSave = { ...imageSettings };
+                safeLocalStorage('set', 'imageSettings', JSON.stringify(settingsToSave));
+                showSettingsFeedback('설정이 자동 저장되었습니다', 'success');
+            } catch (e) {
+                console.error('이미지 설정 자동 저장 실패:', e);
+                showSettingsFeedback('설정 자동 저장 실패', 'error');
+            }
+        }
+
+        // 설정 피드백 시스템
+        function showSettingsFeedback(message, type = 'success') {
+            // 기존 피드백 제거
+            const existingFeedback = document.querySelector('.settings-feedback');
+            if (existingFeedback) {
+                existingFeedback.remove();
+            }
+            
+            const feedback = document.createElement('div');
+            feedback.className = `settings-feedback ${type}`;
+            feedback.textContent = message;
+            
+            document.body.appendChild(feedback);
+            
+            // 애니메이션 표시
+            setTimeout(() => {
+                feedback.classList.add('show');
+            }, 100);
+            
+            // 3초 후 자동 숨김
+            setTimeout(() => {
+                feedback.classList.remove('show');
+                setTimeout(() => {
+                    if (feedback.parentNode) {
+                        feedback.parentNode.removeChild(feedback);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 파일 크기 예상 계산
+        function calculateFileSizeEstimate() {
+            const width = imageSettings.maxWidth;
+            const quality = imageSettings.quality;
+            const format = imageSettings.format;
+            
+            // 기본 계산 (예상 크기)
+            let baseSizeKB;
+            
+            if (format === 'png') {
+                // PNG: 무손실 압축, 크기가 큼
+                baseSizeKB = (width * width * 0.75 * 3) / 1024; // RGB 3바이트 가정
+            } else if (format === 'webp') {
+                // WebP: 우수한 압축률
+                baseSizeKB = (width * width * 0.5 * quality) / 1024;
+            } else {
+                // JPEG: 일반적인 압축률
+                baseSizeKB = (width * width * 0.7 * quality) / 1024;
+            }
+            
+            // 원본 예상 크기 (1920x1080 기준)
+            const originalSizeKB = (1920 * 1080 * 3) / 1024;
+            
+            return {
+                originalKB: Math.round(originalSizeKB),
+                compressedKB: Math.round(baseSizeKB),
+                ratio: Math.round((1 - (baseSizeKB / originalSizeKB)) * 100)
+            };
+        }
+
+        // 파일 크기를 사람이 읽기 쉽은 형식으로 변환
+        function formatFileSize(sizeKB) {
+            if (sizeKB < 1024) {
+                return Math.round(sizeKB) + 'KB';
+            } else {
+                return (sizeKB / 1024).toFixed(1) + 'MB';
+            }
+        }
+
+        // 카메라 해상도에 따른 제약 조건
+        function getCameraConstraints() {
+            const resolutionMap = {
+                'hd': { width: 1280, height: 720 },
+                'fhd': { width: 1920, height: 1080 },
+                '4k': { width: 3840, height: 2160 }
+            };
+            
+            const res = resolutionMap[imageSettings.cameraResolution] || resolutionMap.hd;
+            return {
+                video: {
+                    width: { ideal: res.width },
+                    height: { ideal: res.height },
+                    facingMode: 'environment'
+                }
+            };
+        }
+
+        // 이미지 압축 함수 (Canvas 사용) - 설정값 적용
+        function compressImage(file, maxWidth = null, quality = null) {
+            // 설정값 사용
+            maxWidth = maxWidth || imageSettings.maxWidth;
+            quality = quality || imageSettings.quality;
+            
+            // 자동 압축이 비활성화된 경우 원본 반환
+            if (!imageSettings.autoCompress) {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(file);
+                });
+            }
+            
             return new Promise((resolve) => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -182,12 +351,190 @@
                     // 이미지 그리기
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // 압축된 데이터 URL 반환
-                    resolve(canvas.toDataURL('image/jpeg', quality));
+                    // 압축된 데이터 URL 반환 (형식 설정 적용)
+                    let format = 'image/jpeg';
+                    if (imageSettings.format === 'webp') format = 'image/webp';
+                    else if (imageSettings.format === 'png') format = 'image/png';
+                    
+                    resolve(canvas.toDataURL(format, quality));
                 };
                 
                 img.src = URL.createObjectURL(file);
             });
+        }
+
+        // 이미지 설정 모달 관련 함수들
+        function showImageSettings() {
+            const modal = document.getElementById('imageSettingsModal');
+            const qualitySlider = document.getElementById('qualitySlider');
+            const maxWidthInput = document.getElementById('maxWidthInput');
+            const formatSelect = document.getElementById('formatSelect');
+            const autoCompressToggle = document.getElementById('autoCompressToggle');
+            const cameraResolutionSelect = document.getElementById('cameraResolutionSelect');
+            
+            // 현재 설정값 로드
+            qualitySlider.value = imageSettings.quality;
+            maxWidthInput.value = imageSettings.maxWidth;
+            formatSelect.value = imageSettings.format;
+            autoCompressToggle.checked = imageSettings.autoCompress;
+            cameraResolutionSelect.value = imageSettings.cameraResolution;
+            
+            updateImageSettingsPreview();
+            
+            modal.style.display = 'block';
+            modal.setAttribute('aria-hidden', 'false');
+            
+            // 첫 번째 입력 요소에 포커스
+            qualitySlider.focus();
+        }
+
+        function hideImageSettings() {
+            const modal = document.getElementById('imageSettingsModal');
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function updateImageSettingsPreview() {
+            const qualitySlider = document.getElementById('qualitySlider');
+            const maxWidthInput = document.getElementById('maxWidthInput');
+            const formatSelect = document.getElementById('formatSelect');
+            const autoCompressToggle = document.getElementById('autoCompressToggle');
+            
+            const qualityValue = document.getElementById('qualityValue');
+            const previewQuality = document.getElementById('previewQuality');
+            const previewWidth = document.getElementById('previewWidth');
+            const previewFormat = document.getElementById('previewFormat');
+            const previewCompress = document.getElementById('previewCompress');
+            
+            // 슬라이더 값 표시
+            if (qualityValue) qualityValue.textContent = qualitySlider.value;
+            
+            // 미리보기 업데이트
+            if (previewQuality) previewQuality.textContent = qualitySlider.value;
+            if (previewWidth) previewWidth.textContent = maxWidthInput.value + 'px';
+            if (previewFormat) previewFormat.textContent = formatSelect.value.toUpperCase();
+            if (previewCompress) previewCompress.textContent = autoCompressToggle.checked ? '활성화' : '비활성화';
+            
+            // 임시 설정값 업데이트 (자동 저장을 위해)
+            const tempSettings = {
+                quality: parseFloat(qualitySlider.value),
+                maxWidth: parseInt(maxWidthInput.value),
+                format: formatSelect.value,
+                autoCompress: autoCompressToggle.checked
+            };
+            
+            // 파일 크기 예상 계산 및 표시
+            updateFileSizeEstimate(tempSettings);
+            
+            // 실시간 자동 저장 (디바운싱 적용)
+            clearTimeout(updateImageSettingsPreview.debounceTimer);
+            updateImageSettingsPreview.debounceTimer = setTimeout(() => {
+                // 전역 설정값 업데이트
+                imageSettings.quality = tempSettings.quality;
+                imageSettings.maxWidth = tempSettings.maxWidth;
+                imageSettings.format = tempSettings.format;
+                imageSettings.autoCompress = tempSettings.autoCompress;
+                
+                // 자동 저장
+                saveImageSettingsAuto();
+            }, 1000); // 1초 후 자동 저장
+        }
+        
+        // 파일 크기 예상 업데이트
+        function updateFileSizeEstimate(settings = imageSettings) {
+            const originalSizeEl = document.getElementById('originalSizeEstimate');
+            const compressedSizeEl = document.getElementById('compressedSizeEstimate');
+            const compressionRatioEl = document.getElementById('compressionRatio');
+            
+            if (!originalSizeEl || !compressedSizeEl || !compressionRatioEl) return;
+            
+            try {
+                // 임시로 전역 설정 업데이트
+                const originalSettings = { ...imageSettings };
+                Object.assign(imageSettings, settings);
+                
+                const estimate = calculateFileSizeEstimate();
+                
+                originalSizeEl.textContent = formatFileSize(estimate.originalKB);
+                compressedSizeEl.textContent = formatFileSize(estimate.compressedKB);
+                compressionRatioEl.textContent = estimate.ratio + '%';
+                
+                // 압축률에 따른 색상 변경
+                if (estimate.ratio > 70) {
+                    compressionRatioEl.style.color = '#2ed573'; // 녹색 (좋음)
+                } else if (estimate.ratio > 50) {
+                    compressionRatioEl.style.color = '#ffa502'; // 주황색 (보통)
+                } else {
+                    compressionRatioEl.style.color = '#ff4757'; // 빨간색 (낮음)
+                }
+                
+                // 원래 설정 복원
+                Object.assign(imageSettings, originalSettings);
+                
+            } catch (e) {
+                console.error('파일 크기 예상 계산 오류:', e);
+                originalSizeEl.textContent = '오류';
+                compressedSizeEl.textContent = '오류';
+                compressionRatioEl.textContent = '오류';
+            }
+        }
+
+        function saveImageSettings() {
+            const qualitySlider = document.getElementById('qualitySlider');
+            const maxWidthInput = document.getElementById('maxWidthInput');
+            const formatSelect = document.getElementById('formatSelect');
+            const autoCompressToggle = document.getElementById('autoCompressToggle');
+            const cameraResolutionSelect = document.getElementById('cameraResolutionSelect');
+            
+            try {
+                // 입력값 유효성 검사
+                const newSettings = {
+                    quality: parseFloat(qualitySlider.value),
+                    maxWidth: parseInt(maxWidthInput.value),
+                    format: formatSelect.value,
+                    autoCompress: autoCompressToggle.checked,
+                    cameraResolution: cameraResolutionSelect.value
+                };
+                
+                const validated = validateImageSettings(newSettings);
+                if (!validated || Object.keys(validated).length < 5) {
+                    throw new Error('잘못된 설정값이 입력되었습니다.');
+                }
+                
+                // 설정값 업데이트
+                Object.assign(imageSettings, validated);
+                
+                // localStorage에 저장
+                safeLocalStorage('set', 'imageSettings', JSON.stringify(imageSettings));
+                
+                showSettingsFeedback('이미지 설정이 저장되었습니다!', 'success');
+                
+                hideImageSettings();
+                
+            } catch (e) {
+                console.error('이미지 설정 저장 실패:', e);
+                showSettingsFeedback('설정 저장 중 오류가 발생했습니다: ' + e.message, 'error');
+            }
+        }
+
+        function resetImageSettings() {
+            if (confirm('이미지 설정을 기본값으로 되돌리시겠습니까?')) {
+                try {
+                    // 기본값으로 복원
+                    imageSettings = { ...defaultImageSettings };
+                    
+                    // localStorage에서 삭제
+                    safeLocalStorage('remove', 'imageSettings');
+                    
+                    // 모달 새로고침
+                    showImageSettings();
+                    
+                    showSettingsFeedback('설정이 기본값으로 복원되었습니다', 'success');
+                } catch (e) {
+                    console.error('설정 초기화 오류:', e);
+                    showSettingsFeedback('설정 초기화 실패', 'error');
+                }
+            }
         }
 
         // ========== 기존 코드 시작 ==========
@@ -236,6 +583,18 @@
             health: '건강한 몸과 마음, 당신의 가장 큰 자산',
             other: '꿈을 현실로 만든 당신이 멋집니다'
         };
+
+        // 이미지 설정 기본값
+        const defaultImageSettings = {
+            quality: 0.8,           // 압축 품질 (0.1~1.0)
+            maxWidth: 1200,         // 최대 너비 (px)
+            format: 'jpeg',         // 저장 형식 (jpeg/webp)
+            autoCompress: true,     // 자동 압축 여부
+            cameraResolution: 'hd'  // 카메라 해상도 (hd/fhd/4k)
+        };
+
+        // 사용자 이미지 설정 (localStorage에서 불러오기)
+        let imageSettings = loadImageSettings();
 
         // 모바일 여부 확인 (개선된 버전)
         function isMobile() {
@@ -2070,7 +2429,7 @@
         // 버튼 이벤트 리스너들 (DOMContentLoaded에서 안전하게 등록)
         document.addEventListener('DOMContentLoaded', function() {
             const buttons = {
-                settingsBtn: () => alert('이미지 설정 기능은 개발 중입니다.'),
+                settingsBtn: showImageSettings,
                 userSwitchBtn: showUserSwitch,
                 finishBtn: finishSession,
                 addGoalBtn: addGoal,
@@ -2097,6 +2456,45 @@
                 const element = document.getElementById(id);
                 if (element) {
                     element.addEventListener('click', handler);
+                }
+            });
+            
+            // 이미지 설정 모달 실시간 업데이트 이벤트
+            const qualitySlider = document.getElementById('qualitySlider');
+            const maxWidthInput = document.getElementById('maxWidthInput');
+            const formatSelect = document.getElementById('formatSelect');
+            const autoCompressToggle = document.getElementById('autoCompressToggle');
+            
+            if (qualitySlider) {
+                qualitySlider.addEventListener('input', updateImageSettingsPreview);
+            }
+            if (maxWidthInput) {
+                maxWidthInput.addEventListener('input', updateImageSettingsPreview);
+            }
+            if (formatSelect) {
+                formatSelect.addEventListener('change', updateImageSettingsPreview);
+            }
+            if (autoCompressToggle) {
+                autoCompressToggle.addEventListener('change', updateImageSettingsPreview);
+            }
+            
+            // 모달 외부 클릭 시 닫기
+            const imageSettingsModal = document.getElementById('imageSettingsModal');
+            if (imageSettingsModal) {
+                imageSettingsModal.addEventListener('click', function(e) {
+                    if (e.target === imageSettingsModal) {
+                        hideImageSettings();
+                    }
+                });
+            }
+            
+            // ESC 키로 모달 닫기
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const modal = document.getElementById('imageSettingsModal');
+                    if (modal && modal.style.display === 'block') {
+                        hideImageSettings();
+                    }
                 }
             });
 
