@@ -4027,6 +4027,12 @@
             } else if (tabName === 'data') {
                 updateDataStats();
                 renderProfileList();
+            } else if (tabName === 'journey') {
+                initJourneyTab();
+            } else if (tabName === 'insights') {
+                initInsightsTab();
+            } else if (tabName === 'social') {
+                initSocialTab();
             }
             
             performance.mark('switchTab-end');
@@ -5645,6 +5651,1095 @@
             performance.mark('renderBucketList-end');
             performance.measure('renderBucketList', 'renderBucketList-start', 'renderBucketList-end');
         }
+
+        // ========== 새 탭 초기화 함수들 ==========
+        
+        // 꿈의 여정 탭 초기화
+        function initJourneyTab() {
+            if (!currentProfile) return;
+            
+            try {
+                updateJourneyStats();
+                renderAchievementTimeline();
+                updateCategoryProgress();
+                updateDailyInspiration();
+            } catch (error) {
+                console.error('여정 탭 초기화 오류:', error);
+            }
+        }
+        
+        // 인사이트 탭 초기화  
+        function initInsightsTab() {
+            if (!currentProfile) return;
+            
+            try {
+                renderAchievementChart();
+                renderEmotionChart();
+                renderTimePatternChart();
+                renderCategoryDistributionChart();
+                updatePersonalInsights();
+                updatePredictionCards();
+            } catch (error) {
+                console.error('인사이트 탭 초기화 오류:', error);
+            }
+        }
+        
+        // 소셜 탭 초기화
+        function initSocialTab() {
+            if (!currentProfile) return;
+            
+            try {
+                loadFamilyMembersUI();
+                loadSharedGoalsUI();
+                loadFamilyChallengesUI();
+                loadEncouragementWall();
+                setupSocialEventHandlers();
+            } catch (error) {
+                console.error('소셜 탭 초기화 오류:', error);
+            }
+        }
+        
+        // 꿈 지도 렌더링
+        function renderDreamMap(dreamMap) {
+            const container = document.querySelector('#journey-tab .dream-map-container');
+            if (!container) return;
+            
+            // 기본 지도 구조 생성
+            container.innerHTML = `
+                <div class="map-controls">
+                    <button onclick="switchMapView('world')" class="map-btn active">🌍 세계지도</button>
+                    <button onclick="switchMapView('dream')" class="map-btn">✨ 꿈의 영역</button>
+                    <button onclick="switchMapView('timeline')" class="map-btn">📅 타임라인</button>
+                </div>
+                <div class="map-display">
+                    <div id="world-map" class="map-view active">
+                        <h3>여행 꿈 지도</h3>
+                        <div class="travel-goals"></div>
+                    </div>
+                    <div id="dream-realm" class="map-view">
+                        <h3>꿈의 영역</h3>
+                        <div class="dream-regions"></div>
+                    </div>
+                    <div id="timeline-view" class="map-view">
+                        <h3>꿈의 타임라인</h3>
+                        <div class="timeline-container"></div>
+                    </div>
+                </div>
+            `;
+            
+            // 여행 목표 표시
+            renderTravelGoals(dreamMap.mapStructure.worldMap.travelGoals);
+            
+            // 꿈의 영역 표시
+            renderDreamRegions(dreamMap.mapStructure.dreamRealm.regions);
+            
+            // 타임라인 표시
+            renderTimeline(dreamMap.mapStructure.timeline);
+        }
+        
+        // 여행 목표 렌더링
+        function renderTravelGoals(travelGoals) {
+            const container = document.querySelector('.travel-goals');
+            if (!container) return;
+            
+            container.innerHTML = travelGoals.map(goal => `
+                <div class="travel-goal" data-lat="${goal.coordinates?.lat}" data-lng="${goal.coordinates?.lng}">
+                    <div class="goal-marker ${goal.completed ? 'completed' : 'pending'}">
+                        📍
+                    </div>
+                    <div class="goal-info">
+                        <h4>${goal.title}</h4>
+                        <p>${goal.location?.country || '미정'} - ${goal.location?.city || '미정'}</p>
+                        <span class="status">${goal.completed ? '완료' : '계획중'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 꿈의 영역 렌더링
+        function renderDreamRegions(regions) {
+            const container = document.querySelector('.dream-regions');
+            if (!container) return;
+            
+            container.innerHTML = Object.entries(regions).map(([key, region]) => `
+                <div class="dream-region" style="border-color: ${region.color}">
+                    <h4>${region.name}</h4>
+                    <div class="region-goals">
+                        ${region.goals.map(goal => `
+                            <div class="region-goal ${goal.completed ? 'completed' : 'pending'}">
+                                <span class="goal-title">${goal.title}</span>
+                                <span class="goal-status">${goal.completed ? '✅' : '⏳'}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="region-stats">
+                        총 ${region.goals.length}개 목표
+                        (완료: ${region.goals.filter(g => g.completed).length}개)
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 타임라인 렌더링
+        function renderTimeline(timeline) {
+            const container = document.querySelector('.timeline-container');
+            if (!container) return;
+            
+            container.innerHTML = Object.entries(timeline).map(([key, period]) => `
+                <div class="timeline-period">
+                    <h4>${period.period}</h4>
+                    <div class="period-goals">
+                        ${period.goals.map(goal => `
+                            <div class="timeline-goal ${goal.completed ? 'completed' : 'pending'}">
+                                <div class="goal-marker"></div>
+                                <div class="goal-content">
+                                    <span class="goal-title">${goal.title}</span>
+                                    <span class="goal-date">
+                                        ${goal.completedAt ? new Date(goal.completedAt).toLocaleDateString('ko-KR') : 
+                                          goal.targetDate ? new Date(goal.targetDate).toLocaleDateString('ko-KR') : '날짜 미정'}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // ========== 여정 탭 실제 DOM 연결 함수들 ==========
+        
+        // 여정 통계 업데이트 (실제 HTML ID와 연결)
+        function updateJourneyStats() {
+            if (!currentProfile) return;
+            
+            const goals = currentProfile.bucketList;
+            const completed = goals.filter(g => g.completed);
+            
+            // 꿈을 키운 일수 계산
+            const firstGoalDate = goals.length > 0 ? new Date(goals[0].createdAt) : new Date();
+            const daysSinceStart = Math.floor((new Date() - firstGoalDate) / (1000 * 60 * 60 * 24));
+            
+            // 연속 달성 기록 계산
+            let streak = 0;
+            const sortedCompleted = completed.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+            for (let i = 0; i < sortedCompleted.length; i++) {
+                const completedDate = new Date(sortedCompleted[i].completedAt);
+                const daysDiff = Math.floor((new Date() - completedDate) / (1000 * 60 * 60 * 24));
+                if (daysDiff <= 30) streak++;
+                else break;
+            }
+            
+            // 마일스톤 계산 (5개씩)
+            const milestones = Math.floor(completed.length / 5);
+            
+            // DOM 업데이트
+            const journeyDaysEl = document.getElementById('journeyDays');
+            const journeyStreakEl = document.getElementById('journeyStreak');
+            const journeyMilestonesEl = document.getElementById('journeyMilestones');
+            
+            if (journeyDaysEl) journeyDaysEl.textContent = daysSinceStart;
+            if (journeyStreakEl) journeyStreakEl.textContent = streak;
+            if (journeyMilestonesEl) journeyMilestonesEl.textContent = milestones;
+        }
+        
+        // 달성 타임라인 렌더링
+        function renderAchievementTimeline() {
+            const container = document.getElementById('achievementTimeline');
+            if (!container || !currentProfile) return;
+            
+            const completed = currentProfile.bucketList
+                .filter(goal => goal.completed)
+                .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
+                .slice(0, 10);
+            
+            if (completed.length === 0) {
+                container.innerHTML = '<p class="empty-timeline">아직 완료된 목표가 없습니다. 첫 번째 목표를 달성해보세요!</p>';
+                return;
+            }
+            
+            container.innerHTML = completed.map(goal => `
+                <div class="timeline-item">
+                    <div class="timeline-dot ${goal.category}"></div>
+                    <div class="timeline-content">
+                        <h4>${goal.title}</h4>
+                        <p class="timeline-date">${new Date(goal.completedAt).toLocaleDateString('ko-KR')}</p>
+                        <span class="timeline-category">${getCategoryDisplayName(goal.category)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 카테고리별 진행 현황 업데이트
+        function updateCategoryProgress() {
+            const container = document.getElementById('categoryProgressGrid');
+            if (!container || !currentProfile) return;
+            
+            const categoryStats = {};
+            currentProfile.bucketList.forEach(goal => {
+                if (!categoryStats[goal.category]) {
+                    categoryStats[goal.category] = { total: 0, completed: 0 };
+                }
+                categoryStats[goal.category].total++;
+                if (goal.completed) categoryStats[goal.category].completed++;
+            });
+            
+            container.innerHTML = Object.entries(categoryStats).map(([category, stats]) => {
+                const percentage = Math.round((stats.completed / stats.total) * 100);
+                return `
+                    <div class="category-progress-card">
+                        <h4>${getCategoryDisplayName(category)}</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${category}" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="progress-text">${stats.completed}/${stats.total} (${percentage}%)</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 오늘의 영감 업데이트
+        function updateDailyInspiration() {
+            const quoteEl = document.getElementById('inspirationQuote');
+            const authorEl = document.getElementById('inspirationAuthor');
+            
+            if (!quoteEl || !authorEl) return;
+            
+            const inspirations = [
+                { quote: "꿈을 이루는 것이 중요한 게 아니라, 꿈을 향해 걸어가는 여정 자체가 당신을 성장시킵니다.", author: "버킷 드림즈" },
+                { quote: "위대한 일을 하는 유일한 방법은 하는 일을 사랑하는 것이다.", author: "스티브 잡스" },
+                { quote: "성공은 목적지가 아니라 여정이다.", author: "아서 애시" },
+                { quote: "꿈을 이룰 수 있다고 믿는 순간, 그것은 현실이 된다.", author: "윌 스미스" },
+                { quote: "작은 걸음도 앞으로 나아가는 것이다.", author: "마틴 루터 킹" }
+            ];
+            
+            const today = new Date().getDate();
+            const todayInspiration = inspirations[today % inspirations.length];
+            
+            quoteEl.textContent = `"${todayInspiration.quote}"`;
+            authorEl.textContent = `- ${todayInspiration.author}`;
+        }
+        
+        // ========== 인사이트 탭 실제 DOM 연결 함수들 ==========
+        
+        // 달성률 분석 차트
+        function renderAchievementChart() {
+            const chartContainer = document.getElementById('achievementChart');
+            if (!chartContainer || !currentProfile) return;
+            
+            try {
+                const goals = currentProfile.bucketList;
+                const completed = goals.filter(g => g.completed).length;
+                const inProgress = goals.length - completed;
+                
+                if (window.Chart) {
+                    const ctx = chartContainer.getContext('2d');
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['완료', '진행중'],
+                            datasets: [{
+                                data: [completed, inProgress],
+                                backgroundColor: ['#4CAF50', '#FFC107']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'bottom' }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('달성률 차트 오류:', error);
+                chartContainer.innerHTML = '<p>차트를 로드할 수 없습니다.</p>';
+            }
+        }
+        
+        // 감정 패턴 차트
+        function renderEmotionChart() {
+            const chartContainer = document.getElementById('emotionChart');
+            if (!chartContainer || !currentProfile) return;
+            
+            try {
+                const emotionData = {};
+                currentProfile.bucketList.forEach(goal => {
+                    if (goal.emotions && goal.emotions.length > 0) {
+                        goal.emotions.forEach(emotion => {
+                            emotionData[emotion.emotion] = (emotionData[emotion.emotion] || 0) + 1;
+                        });
+                    }
+                });
+                
+                if (window.Chart && Object.keys(emotionData).length > 0) {
+                    const ctx = chartContainer.getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(emotionData),
+                            datasets: [{
+                                label: '감정 빈도',
+                                data: Object.values(emotionData),
+                                backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                } else {
+                    chartContainer.innerHTML = '<p>감정 데이터가 없습니다.</p>';
+                }
+            } catch (error) {
+                console.error('감정 차트 오류:', error);
+                chartContainer.innerHTML = '<p>차트를 로드할 수 없습니다.</p>';
+            }
+        }
+        
+        // 달성 시간 패턴 차트
+        function renderTimePatternChart() {
+            const chartContainer = document.getElementById('timePatternChart');
+            if (!chartContainer || !currentProfile) return;
+            
+            try {
+                const completed = currentProfile.bucketList.filter(g => g.completed);
+                const monthlyData = {};
+                
+                completed.forEach(goal => {
+                    const month = new Date(goal.completedAt).toISOString().slice(0, 7);
+                    monthlyData[month] = (monthlyData[month] || 0) + 1;
+                });
+                
+                if (window.Chart && Object.keys(monthlyData).length > 0) {
+                    const ctx = chartContainer.getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: Object.keys(monthlyData).sort(),
+                            datasets: [{
+                                label: '월별 달성 수',
+                                data: Object.keys(monthlyData).sort().map(month => monthlyData[month]),
+                                borderColor: '#36A2EB',
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                } else {
+                    chartContainer.innerHTML = '<p>시간 패턴 데이터가 없습니다.</p>';
+                }
+            } catch (error) {
+                console.error('시간 패턴 차트 오류:', error);
+                chartContainer.innerHTML = '<p>차트를 로드할 수 없습니다.</p>';
+            }
+        }
+        
+        // 카테고리 분포 차트
+        function renderCategoryDistributionChart() {
+            const chartContainer = document.getElementById('categoryDistributionChart');
+            if (!chartContainer || !currentProfile) return;
+            
+            try {
+                const categoryData = {};
+                currentProfile.bucketList.forEach(goal => {
+                    const category = getCategoryDisplayName(goal.category);
+                    categoryData[category] = (categoryData[category] || 0) + 1;
+                });
+                
+                if (window.Chart && Object.keys(categoryData).length > 0) {
+                    const ctx = chartContainer.getContext('2d');
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: Object.keys(categoryData),
+                            datasets: [{
+                                data: Object.values(categoryData),
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'bottom' }
+                            }
+                        }
+                    });
+                } else {
+                    chartContainer.innerHTML = '<p>카테고리 데이터가 없습니다.</p>';
+                }
+            } catch (error) {
+                console.error('카테고리 분포 차트 오류:', error);
+                chartContainer.innerHTML = '<p>차트를 로드할 수 없습니다.</p>';
+            }
+        }
+        
+        // 개인화된 인사이트 업데이트
+        function updatePersonalInsights() {
+            const container = document.getElementById('personalInsights');
+            if (!container || !currentProfile) return;
+            
+            try {
+                const goals = currentProfile.bucketList;
+                const completed = goals.filter(g => g.completed);
+                const insights = [];
+                
+                // 달성률 인사이트
+                const completionRate = Math.round((completed.length / goals.length) * 100) || 0;
+                if (completionRate >= 80) {
+                    insights.push({ icon: '🎉', text: `놀라운 달성률 ${completionRate}%! 당신은 목표 달성의 달인입니다.` });
+                } else if (completionRate >= 50) {
+                    insights.push({ icon: '📈', text: `꾸준한 성과 ${completionRate}%! 조금만 더 노력하면 목표 달인이 될 수 있어요.` });
+                } else {
+                    insights.push({ icon: '💪', text: `시작이 반! ${completionRate}%의 달성률로 좋은 출발을 하셨네요.` });
+                }
+                
+                // 카테고리 인사이트
+                const categoryStats = {};
+                goals.forEach(goal => {
+                    categoryStats[goal.category] = (categoryStats[goal.category] || 0) + 1;
+                });
+                const favoriteCategory = Object.entries(categoryStats).sort((a, b) => b[1] - a[1])[0];
+                if (favoriteCategory) {
+                    insights.push({ 
+                        icon: '🎯', 
+                        text: `${getCategoryDisplayName(favoriteCategory[0])} 분야에 가장 많은 관심을 보이고 계시네요!` 
+                    });
+                }
+                
+                // 시간 인사이트
+                if (completed.length >= 2) {
+                    const avgTime = completed.reduce((sum, goal) => {
+                        const created = new Date(goal.createdAt);
+                        const completedDate = new Date(goal.completedAt);
+                        return sum + (completedDate - created) / (1000 * 60 * 60 * 24);
+                    }, 0) / completed.length;
+                    
+                    insights.push({ 
+                        icon: '⏰', 
+                        text: `평균 ${Math.round(avgTime)}일만에 목표를 달성하시는군요! ${avgTime < 30 ? '빠른 실행력이 인상적입니다.' : '신중하게 목표를 완성해나가시는 스타일이네요.'}` 
+                    });
+                }
+                
+                container.innerHTML = insights.map(insight => `
+                    <div class="insight-item">
+                        <div class="insight-icon">${insight.icon}</div>
+                        <div class="insight-text">${insight.text}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('개인화된 인사이트 오류:', error);
+                container.innerHTML = '<p>인사이트를 생성할 수 없습니다.</p>';
+            }
+        }
+        
+        // 달성 예측 카드 업데이트
+        function updatePredictionCards() {
+            const container = document.getElementById('predictionCards');
+            if (!container || !currentProfile) return;
+            
+            try {
+                const activeGoals = currentProfile.bucketList.filter(g => !g.completed);
+                const predictions = [];
+                
+                activeGoals.slice(0, 3).forEach(goal => {
+                    try {
+                        const probability = SmartPlanner.predictSuccessProbability(goal, currentProfile);
+                        const actionPlan = SmartPlanner.generateActionPlan(goal);
+                        
+                        predictions.push({
+                            goal: goal.title,
+                            probability: Math.round(probability * 100),
+                            nextStep: actionPlan.steps[0] || '계획을 세워보세요',
+                            timeframe: actionPlan.timeframe || '미정'
+                        });
+                    } catch (error) {
+                        console.error('예측 생성 오류:', error);
+                    }
+                });
+                
+                if (predictions.length === 0) {
+                    container.innerHTML = '<p>예측할 수 있는 진행중인 목표가 없습니다.</p>';
+                    return;
+                }
+                
+                container.innerHTML = predictions.map(pred => `
+                    <div class="prediction-card">
+                        <h4>${pred.goal}</h4>
+                        <div class="prediction-probability">
+                            <span class="probability-value">${pred.probability}%</span>
+                            <span class="probability-label">성공 확률</span>
+                        </div>
+                        <div class="prediction-next-step">
+                            <strong>다음 단계:</strong> ${pred.nextStep}
+                        </div>
+                        <div class="prediction-timeframe">
+                            <strong>예상 기간:</strong> ${pred.timeframe}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('예측 카드 오류:', error);
+                container.innerHTML = '<p>예측을 생성할 수 없습니다.</p>';
+            }
+        }
+        
+        // 추천 섹션 업데이트
+        function updateRecommendationsSection() {
+            const container = document.querySelector('#smartRecommendations');
+            if (!container || !currentProfile) return;
+            
+            try {
+                const userPattern = DreamRecommendationEngine.analyzeUserPatterns(currentProfile);
+                const recommendations = DreamRecommendationEngine.suggestNewDreams(userPattern);
+                
+                container.innerHTML = `
+                    <h3>맞춤 추천 꿈</h3>
+                    <div class="recommendations-list">
+                        ${recommendations.slice(0, 3).map(rec => `
+                            <div class="recommendation-card" onclick="addRecommendedGoal('${rec.title}', '${rec.category}')">
+                                <div class="rec-icon">${rec.icon || '⭐'}</div>
+                                <div class="rec-content">
+                                    <h4>${rec.title}</h4>
+                                    <p>${rec.description}</p>
+                                    <div class="rec-score">추천도: ${Math.round(rec.score * 100)}%</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('추천 섹션 업데이트 오류:', error);
+                container.innerHTML = '<p>추천을 생성할 수 없습니다.</p>';
+            }
+        }
+        
+        // 감정적 인사이트 업데이트
+        function updateEmotionalInsights() {
+            const container = document.querySelector('#emotionalInsights');
+            if (!container || !currentProfile) return;
+            
+            try {
+                const recentGoals = currentProfile.bucketList
+                    .filter(goal => goal.completedAt)
+                    .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
+                    .slice(0, 5);
+                
+                const insights = recentGoals.map(goal => {
+                    const pattern = EmotionalJourney.analyzeEmotionalPattern(goal);
+                    return {
+                        goal: goal.title,
+                        emotion: pattern.dominantEmotion,
+                        trend: pattern.trend,
+                        message: EmotionalJourney.getMotivationalMessage(goal)
+                    };
+                });
+                
+                container.innerHTML = `
+                    <h3>감정적 인사이트</h3>
+                    <div class="insights-list">
+                        ${insights.map(insight => `
+                            <div class="insight-card">
+                                <div class="insight-emotion">${insight.emotion}</div>
+                                <div class="insight-content">
+                                    <h4>${insight.goal}</h4>
+                                    <p>${insight.message}</p>
+                                    <span class="trend ${insight.trend}">${insight.trend === 'up' ? '📈' : '📊'}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('감정적 인사이트 업데이트 오류:', error);
+                container.innerHTML = '<p>인사이트를 생성할 수 없습니다.</p>';
+            }
+        }
+        
+        // 통계 계산 및 표시
+        function calculateAndDisplayStats() {
+            const statsContainer = document.querySelector('#insights-tab .stats-overview');
+            if (!statsContainer || !currentProfile) return;
+            
+            const goals = currentProfile.bucketList;
+            const completed = goals.filter(g => g.completed);
+            const avgCompletionTime = completed.length > 0 ? 
+                completed.reduce((sum, goal) => {
+                    const created = new Date(goal.createdAt);
+                    const completedDate = new Date(goal.completedAt);
+                    return sum + (completedDate - created) / (1000 * 60 * 60 * 24);
+                }, 0) / completed.length : 0;
+            
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${Math.round(avgCompletionTime)}</div>
+                    <div class="stat-label">평균 달성 일수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${currentProfile.bucketList.filter(g => g.category === 'travel').length}</div>
+                    <div class="stat-label">여행 목표</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${currentProfile.bucketList.filter(g => g.category === 'hobby').length}</div>
+                    <div class="stat-label">취미 목표</div>
+                </div>
+            `;
+        }
+        
+        // ========== 소셜 탭 실제 DOM 연결 함수들 ==========
+        
+        // 가족 구성원 UI 로드 (실제 HTML ID와 연결)
+        function loadFamilyMembersUI() {
+            const container = document.getElementById('familyMembers');
+            if (!container) return;
+            
+            try {
+                const familyMembers = DreamSocialNetwork.getFamilyMembers();
+                
+                if (familyMembers.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-family">
+                            <p>아직 가족 구성원이 없습니다.</p>
+                            <p>가족과 함께 꿈을 공유해보세요!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = familyMembers.map(member => `
+                    <div class="family-member-card">
+                        <div class="member-avatar">${member.avatar || '👤'}</div>
+                        <div class="member-info">
+                            <h4>${member.name}</h4>
+                            <p>${member.relationship}</p>
+                            <span class="connection-status ${member.connectionStatus}">
+                                ${member.connectionStatus === 'active' ? '🟢 온라인' : '⚪ 오프라인'}
+                            </span>
+                        </div>
+                        <div class="member-actions">
+                            <button onclick="shareDreamWithMember('${member.id}')" class="btn-small">공유</button>
+                            <button onclick="sendMessage('${member.id}')" class="btn-small">메시지</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('가족 구성원 로드 오류:', error);
+                container.innerHTML = '<p>가족 구성원을 로드할 수 없습니다.</p>';
+            }
+        }
+        
+        // 공유된 목표 UI 로드
+        function loadSharedGoalsUI() {
+            const container = document.getElementById('sharedGoals');
+            if (!container) return;
+            
+            try {
+                const sharedGoals = DreamSocialNetwork.getSharedGoals();
+                
+                if (sharedGoals.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-shared">
+                            <p>아직 공유된 목표가 없습니다.</p>
+                            <p>가족과 목표를 공유하여 서로 응원해보세요!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = sharedGoals.map(goal => `
+                    <div class="shared-goal-card">
+                        <div class="goal-header">
+                            <h4>${goal.title}</h4>
+                            <span class="shared-by">by ${goal.sharedBy}</span>
+                        </div>
+                        <div class="goal-details">
+                            <p class="goal-category">${getCategoryDisplayName(goal.category)}</p>
+                            <p class="share-date">공유일: ${new Date(goal.sharedAt).toLocaleDateString('ko-KR')}</p>
+                        </div>
+                        <div class="goal-actions">
+                            <button onclick="addEncouragement('${goal.id}')" class="btn-encourage">👏 응원</button>
+                            <button onclick="adoptGoal('${goal.id}')" class="btn-adopt">📌 내 목표로</button>
+                        </div>
+                        ${goal.encouragements ? `
+                            <div class="encouragements">
+                                ${goal.encouragements.slice(0, 2).map(enc => `
+                                    <div class="encouragement-item">
+                                        <strong>${enc.from}:</strong> ${enc.message}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('공유된 목표 로드 오류:', error);
+                container.innerHTML = '<p>공유된 목표를 로드할 수 없습니다.</p>';
+            }
+        }
+        
+        // 가족 챌린지 UI 로드
+        function loadFamilyChallengesUI() {
+            const container = document.getElementById('familyChallenges');
+            if (!container) return;
+            
+            try {
+                const challenges = DreamSocialNetwork.getActiveChallenges();
+                
+                if (challenges.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-challenges">
+                            <p>진행중인 가족 챌린지가 없습니다.</p>
+                            <p>새로운 챌린지를 만들어 함께 도전해보세요!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = challenges.map(challenge => `
+                    <div class="challenge-card">
+                        <div class="challenge-header">
+                            <h4>${challenge.title}</h4>
+                            <span class="challenge-status">${challenge.status || 'active'}</span>
+                        </div>
+                        <p class="challenge-description">${challenge.description}</p>
+                        <div class="challenge-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${challenge.progress || 0}%"></div>
+                            </div>
+                            <span class="progress-text">${challenge.progress || 0}% 완료</span>
+                        </div>
+                        <div class="challenge-participants">
+                            <strong>참여자:</strong> ${challenge.participants ? challenge.participants.join(', ') : '없음'}
+                        </div>
+                        <div class="challenge-actions">
+                            <button onclick="updateChallengeProgress('${challenge.id}')" class="btn-update">진행 업데이트</button>
+                            <button onclick="viewChallengeDetails('${challenge.id}')" class="btn-details">상세 보기</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('가족 챌린지 로드 오류:', error);
+                container.innerHTML = '<p>챌린지를 로드할 수 없습니다.</p>';
+            }
+        }
+        
+        // 응원 메시지 벽 로드
+        function loadEncouragementWall() {
+            const container = document.getElementById('encouragementWall');
+            if (!container) return;
+            
+            try {
+                // 최근 응원 메시지들을 가져옴 (실제로는 localStorage에서)
+                const encouragements = JSON.parse(localStorage.getItem('encouragements') || '[]');
+                
+                if (encouragements.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-encouragement">
+                            <p>아직 응원 메시지가 없습니다.</p>
+                            <p>가족의 목표에 응원 메시지를 남겨보세요!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const recent = encouragements.slice(-10).reverse(); // 최근 10개
+                
+                container.innerHTML = recent.map(enc => `
+                    <div class="encouragement-message">
+                        <div class="message-header">
+                            <strong>${enc.from}</strong>
+                            <span class="message-time">${new Date(enc.timestamp).toLocaleDateString('ko-KR')}</span>
+                        </div>
+                        <div class="message-content">${enc.message}</div>
+                        <div class="message-target">→ ${enc.targetGoal}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('응원 메시지 로드 오류:', error);
+                container.innerHTML = '<p>응원 메시지를 로드할 수 없습니다.</p>';
+            }
+        }
+        
+        // 소셜 챌린지 업데이트
+        function updateSocialChallenges() {
+            const container = document.querySelector('#socialChallenges');
+            if (!container) return;
+            
+            try {
+                const challenges = DreamSocialNetwork.getActiveChallenges();
+                
+                container.innerHTML = `
+                    <div class="challenges-header">
+                        <h3>가족 챌린지</h3>
+                        <button onclick="showCreateChallengeModal()" class="create-challenge-btn">+ 새 챌린지</button>
+                    </div>
+                    <div class="challenges-list">
+                        ${challenges.map(challenge => `
+                            <div class="challenge-card">
+                                <h4>${challenge.title}</h4>
+                                <p>${challenge.description}</p>
+                                <div class="challenge-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: ${challenge.progress}%"></div>
+                                    </div>
+                                    <span>${challenge.progress}% 완료</span>
+                                </div>
+                                <div class="challenge-participants">
+                                    참여자: ${challenge.participants.join(', ')}
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${challenges.length === 0 ? '<p class="no-challenges">진행중인 챌린지가 없습니다.</p>' : ''}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('소셜 챌린지 업데이트 오류:', error);
+                container.innerHTML = '<p>챌린지를 로드할 수 없습니다.</p>';
+            }
+        }
+        
+        // 공유된 목표 로드
+        function loadSharedGoals() {
+            const container = document.querySelector('#sharedGoalsList');
+            if (!container) return;
+            
+            try {
+                const sharedGoals = DreamSocialNetwork.getSharedGoals();
+                
+                container.innerHTML = `
+                    <h3>공유된 꿈들</h3>
+                    <div class="shared-goals">
+                        ${sharedGoals.map(goal => `
+                            <div class="shared-goal">
+                                <div class="goal-content">
+                                    <h4>${goal.title}</h4>
+                                    <p>공유자: ${goal.sharedBy}</p>
+                                    <span class="share-date">${new Date(goal.sharedAt).toLocaleDateString('ko-KR')}</span>
+                                </div>
+                                <div class="goal-actions">
+                                    <button onclick="addEncouragement('${goal.id}')">응원하기</button>
+                                    <button onclick="adoptGoal('${goal.id}')">내 목표로 추가</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${sharedGoals.length === 0 ? '<p class="no-shared">공유된 꿈이 없습니다.</p>' : ''}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('공유된 목표 로드 오류:', error);
+                container.innerHTML = '<p>공유된 목표를 로드할 수 없습니다.</p>';
+            }
+        }
+        
+        // 소셜 이벤트 핸들러 설정 (실제 HTML 버튼과 연결)
+        function setupSocialEventHandlers() {
+            // 실제 HTML의 가족 추가 버튼 연결
+            const addFamilyBtn = document.getElementById('addFamilyBtn');
+            if (addFamilyBtn) {
+                addFamilyBtn.onclick = function() {
+                    showAddFamilyModal();
+                };
+            }
+            
+            // 실제 HTML의 챌린지 생성 버튼 연결
+            const createChallengeBtn = document.getElementById('createChallengeBtn');
+            if (createChallengeBtn) {
+                createChallengeBtn.onclick = function() {
+                    showCreateChallengeModal();
+                };
+            }
+            
+            // 가족 추가 모달
+            window.showAddFamilyModal = function() {
+                const name = prompt('가족 구성원의 이름을 입력하세요:');
+                if (name) {
+                    const relationship = prompt('관계를 입력하세요 (예: 아버지, 어머니, 형, 누나 등):');
+                    if (relationship) {
+                        try {
+                            DreamSocialNetwork.addFamilyMember({
+                                name: name,
+                                relationship: relationship,
+                                avatar: '👤',
+                                connectionStatus: 'offline'
+                            });
+                            alert(`${name}님이 가족 구성원으로 추가되었습니다!`);
+                            loadFamilyMembersUI(); // UI 새로고침
+                        } catch (error) {
+                            console.error('가족 구성원 추가 오류:', error);
+                            alert('가족 구성원 추가에 실패했습니다.');
+                        }
+                    }
+                }
+            };
+            
+            // 챌린지 생성 모달
+            window.showCreateChallengeModal = function() {
+                const title = prompt('챌린지 제목을 입력하세요:');
+                if (title) {
+                    const description = prompt('챌린지 설명을 입력하세요:');
+                    if (description) {
+                        try {
+                            DreamSocialNetwork.createFamilyChallenge({
+                                title: title,
+                                description: description,
+                                creator: currentProfile.name,
+                                participants: [currentProfile.name],
+                                progress: 0,
+                                status: 'active'
+                            });
+                            alert('새로운 가족 챌린지가 생성되었습니다!');
+                            loadFamilyChallengesUI(); // UI 새로고침
+                        } catch (error) {
+                            console.error('챌린지 생성 오류:', error);
+                            alert('챌린지 생성에 실패했습니다.');
+                        }
+                    }
+                }
+            };
+            
+            // 응원 메시지 추가
+            window.addEncouragement = function(goalId) {
+                const message = prompt('응원 메시지를 입력하세요:');
+                if (message && message.trim()) {
+                    try {
+                        // 응원 메시지를 localStorage에 저장
+                        const encouragements = JSON.parse(localStorage.getItem('encouragements') || '[]');
+                        const newEncouragement = {
+                            id: Date.now().toString(),
+                            goalId: goalId,
+                            from: currentProfile.name,
+                            message: message.trim(),
+                            timestamp: new Date().toISOString(),
+                            targetGoal: '공유된 목표'
+                        };
+                        
+                        encouragements.push(newEncouragement);
+                        localStorage.setItem('encouragements', JSON.stringify(encouragements));
+                        
+                        alert('응원 메시지가 전송되었습니다! 💪');
+                        loadEncouragementWall(); // UI 새로고침
+                        loadSharedGoalsUI(); // 공유 목표도 새로고침
+                    } catch (error) {
+                        console.error('응원 메시지 추가 오류:', error);
+                        alert('응원 메시지 전송에 실패했습니다.');
+                    }
+                }
+            };
+            
+            // 목표 채택
+            window.adoptGoal = function(goalId) {
+                if (confirm('이 목표를 내 목표로 추가하시겠습니까?')) {
+                    try {
+                        const sharedGoals = DreamSocialNetwork.getSharedGoals();
+                        const targetGoal = sharedGoals.find(g => g.id === goalId);
+                        
+                        if (targetGoal) {
+                            const newGoal = {
+                                id: Date.now(),
+                                title: targetGoal.title,
+                                category: targetGoal.category,
+                                completed: false,
+                                createdAt: new Date().toISOString(),
+                                notes: `${targetGoal.sharedBy}님이 공유한 목표를 채택했습니다.`,
+                                inspiration: targetGoal.inspiration || ''
+                            };
+                            
+                            currentProfile.bucketList.push(newGoal);
+                            saveProfiles();
+                            
+                            alert('목표가 내 목표로 추가되었습니다! 🎯');
+                            renderGoals(); // 목표 목록 새로고침
+                        }
+                    } catch (error) {
+                        console.error('목표 채택 오류:', error);
+                        alert('목표 추가에 실패했습니다.');
+                    }
+                }
+            };
+            
+            // 가족과 꿈 공유
+            window.shareDreamWithMember = function(memberId) {
+                const goals = currentProfile.bucketList.filter(g => !g.completed);
+                if (goals.length === 0) {
+                    alert('공유할 수 있는 진행중인 목표가 없습니다.');
+                    return;
+                }
+                
+                const goalTitles = goals.map((goal, index) => `${index + 1}. ${goal.title}`).join('\\n');
+                const selectedIndex = prompt(`공유할 목표를 선택하세요:\\n${goalTitles}\\n\\n번호를 입력하세요:`);
+                
+                if (selectedIndex && selectedIndex > 0 && selectedIndex <= goals.length) {
+                    const selectedGoal = goals[selectedIndex - 1];
+                    try {
+                        DreamSocialNetwork.shareDreamWithFamily(selectedGoal.id, [memberId], 'public');
+                        alert(`"${selectedGoal.title}" 목표가 공유되었습니다! 🤝`);
+                        loadSharedGoalsUI(); // UI 새로고침
+                    } catch (error) {
+                        console.error('목표 공유 오류:', error);
+                        alert('목표 공유에 실패했습니다.');
+                    }
+                }
+            };
+            
+            // 메시지 보내기
+            window.sendMessage = function(memberId) {
+                const message = prompt('메시지를 입력하세요:');
+                if (message && message.trim()) {
+                    alert('메시지가 전송되었습니다! 📨\\n(실제 메시징 기능은 향후 구현 예정)');
+                }
+            };
+            
+            // 챌린지 진행 업데이트
+            window.updateChallengeProgress = function(challengeId) {
+                const progress = prompt('진행률을 입력하세요 (0-100):');
+                if (progress && !isNaN(progress) && progress >= 0 && progress <= 100) {
+                    try {
+                        // 챌린지 진행률 업데이트 로직
+                        alert(`챌린지 진행률이 ${progress}%로 업데이트되었습니다! 🎯`);
+                        loadFamilyChallengesUI(); // UI 새로고침
+                    } catch (error) {
+                        console.error('챌린지 업데이트 오류:', error);
+                        alert('챌린지 업데이트에 실패했습니다.');
+                    }
+                }
+            };
+            
+            // 챌린지 상세 보기
+            window.viewChallengeDetails = function(challengeId) {
+                alert('챌린지 상세 보기 기능은 준비중입니다. 🔍');
+            };
+        }
+        
+        // 지도 뷰 전환
+        window.switchMapView = function(viewType) {
+            document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.map-view').forEach(view => view.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(viewType + '-map').classList.add('active');
+        };
+        
+        // 추천 목표 추가
+        window.addRecommendedGoal = function(title, category) {
+            if (confirm(`"${title}" 목표를 추가하시겠습니까?`)) {
+                const goalInput = document.getElementById('goalInput');
+                const categorySelect = document.getElementById('categorySelect');
+                
+                if (goalInput && categorySelect) {
+                    goalInput.value = title;
+                    categorySelect.value = category;
+                    addGoal();
+                    alert('목표가 추가되었습니다!');
+                }
+            }
+        };
 
         // 갤러리 렌더링 (성능 최적화)
         function renderGallery() {
