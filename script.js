@@ -1822,14 +1822,271 @@
             if (firstButton) firstButton.focus();
         }
 
-        // SNS 카드 생성 (간소화된 버전)
-        function generateSNSCard(goalId, platform) {
-            if (!currentProfile) return;
+        // SNS 카드 생성 (완전 구현 버전)
+        async function generateSNSCard(goalId, platform) {
+            if (!currentProfile) {
+                showCardError('프로필을 찾을 수 없습니다.');
+                return;
+            }
             
             const goal = currentProfile.bucketList.find(g => g.id === goalId);
-            if (!goal || !goal.completed) return;
+            if (!goal || !goal.completed) {
+                showCardError('완료된 목표가 아닙니다.');
+                return;
+            }
 
-            alert('카드 생성 기능은 개발 중입니다.');
+            try {
+                showCardLoading(true);
+                
+                // 플랫폼별 카드 생성
+                const cardElement = await createCardElement(goal, platform);
+                
+                // HTML2Canvas로 이미지 생성
+                const canvas = await html2canvas(cardElement, {
+                    backgroundColor: null,
+                    scale: 2, // 고해상도를 위한 2배 스케일링
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false,
+                    width: cardElement.offsetWidth,
+                    height: cardElement.offsetHeight,
+                    windowWidth: cardElement.offsetWidth,
+                    windowHeight: cardElement.offsetHeight
+                });
+                
+                // PNG로 변환 및 다운로드
+                const link = document.createElement('a');
+                link.download = `${goal.text.replace(/[^a-zA-Z0-9가-힣]/g, '_')}_${platform}_카드.png`;
+                link.href = canvas.toDataURL('image/png');
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showCardSuccess(`${platform === 'instagram' ? '인스타그램' : '기본'} 카드가 다운로드되었습니다!`);
+                
+            } catch (error) {
+                console.error('카드 생성 오류:', error);
+                showCardError('카드 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+            } finally {
+                showCardLoading(false);
+            }
+        }
+
+        // 카드 요소 생성 함수
+        async function createCardElement(goal, platform) {
+            const hiddenArea = document.getElementById('hiddenCardArea');
+            if (!hiddenArea) {
+                throw new Error('카드 생성 영역을 찾을 수 없습니다.');
+            }
+            
+            // 기존 카드 제거
+            hiddenArea.innerHTML = '';
+            
+            // 플랫폼별 카드 크기 설정
+            const dimensions = platform === 'instagram' ? 
+                { width: 405, height: 720 } : // 9:16 비율
+                { width: 400, height: 600 };  // 2:3 비율
+            
+            // 카드 HTML 생성
+            const cardHtml = `
+                <div class="achievement-card ${goal.category}" style="width: ${dimensions.width}px; height: ${dimensions.height}px;">
+                    <div class="achievement-card-content">
+                        <div class="achievement-header">
+                            <div class="achievement-title">${escapeHtml(goal.text)}</div>
+                            <div class="achievement-category">${getCategoryDisplayName(goal.category)}</div>
+                            <div class="achievement-date">달성일: ${formatDate(goal.completedDate)}</div>
+                        </div>
+                        
+                        ${goal.image ? `
+                            <div class="achievement-image-container">
+                                <img src="${goal.image}" alt="달성 인증 사진" class="achievement-image">
+                            </div>
+                        ` : ''}
+                        
+                        <div class="achievement-body">
+                            <div class="achievement-note">
+                                ${goal.note ? `"${escapeHtml(goal.note)}"` : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="achievement-footer">
+                            <div class="achievement-user">
+                                <div class="user-name">${escapeHtml(currentProfile.name)}</div>
+                                <div class="user-subtitle">버킷리스트 달성</div>
+                            </div>
+                            <div class="achievement-branding">
+                                <div class="brand-name">🎯 Bucket Dreams</div>
+                                <div class="brand-subtitle">나의 버킷리스트</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            hiddenArea.innerHTML = cardHtml;
+            const cardElement = hiddenArea.querySelector('.achievement-card');
+            
+            // 이미지 로딩 대기
+            const images = cardElement.querySelectorAll('img');
+            if (images.length > 0) {
+                await Promise.all(Array.from(images).map(img => {
+                    return new Promise((resolve, reject) => {
+                        if (img.complete) {
+                            resolve();
+                        } else {
+                            img.onload = resolve;
+                            img.onerror = reject;
+                        }
+                    });
+                }));
+            }
+            
+            return cardElement;
+        }
+
+        // 카테고리 표시명 반환
+        function getCategoryDisplayName(category) {
+            const categories = {
+                'travel': '🌍 여행',
+                'hobby': '🎨 취미',
+                'career': '💼 커리어',
+                'relationship': '👥 인간관계',
+                'health': '💪 건강',
+                'other': '✨ 기타'
+            };
+            return categories[category] || '✨ 기타';
+        }
+
+        // 날짜 포맷팅
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // 카드 로딩 상태 표시
+        function showCardLoading(isLoading) {
+            let loadingElement = document.getElementById('cardLoadingIndicator');
+            
+            if (isLoading) {
+                if (!loadingElement) {
+                    loadingElement = document.createElement('div');
+                    loadingElement.id = 'cardLoadingIndicator';
+                    loadingElement.innerHTML = `
+                        <div style="
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            background: rgba(255, 255, 255, 0.95);
+                            padding: 30px;
+                            border-radius: 15px;
+                            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+                            z-index: 10000;
+                            text-align: center;
+                            backdrop-filter: blur(10px);
+                        ">
+                            <div style="
+                                width: 50px;
+                                height: 50px;
+                                border: 4px solid #f3f3f3;
+                                border-top: 4px solid #4facfe;
+                                border-radius: 50%;
+                                animation: spin 1s linear infinite;
+                                margin: 0 auto 15px;
+                            "></div>
+                            <div style="color: #333; font-size: 16px; font-weight: 500;">
+                                카드 생성 중...
+                            </div>
+                            <div style="color: #666; font-size: 14px; margin-top: 5px;">
+                                잠시만 기다려주세요
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(loadingElement);
+                }
+                loadingElement.style.display = 'block';
+            } else {
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+            }
+        }
+
+        // 카드 성공 알림
+        function showCardSuccess(message) {
+            const successElement = document.createElement('div');
+            successElement.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: linear-gradient(135deg, #28a745, #20c997);
+                    color: white;
+                    padding: 20px 30px;
+                    border-radius: 15px;
+                    box-shadow: 0 10px 40px rgba(40, 167, 69, 0.3);
+                    z-index: 10001;
+                    text-align: center;
+                    backdrop-filter: blur(10px);
+                    animation: fadeInScale 0.3s ease-out;
+                ">
+                    <div style="font-size: 24px; margin-bottom: 10px;">✅</div>
+                    <div style="font-size: 16px; font-weight: 500;">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(successElement);
+            
+            setTimeout(() => {
+                successElement.style.animation = 'fadeOutScale 0.3s ease-in';
+                setTimeout(() => {
+                    document.body.removeChild(successElement);
+                }, 300);
+            }, 3000);
+        }
+
+        // 카드 에러 알림
+        function showCardError(message) {
+            const errorElement = document.createElement('div');
+            errorElement.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: linear-gradient(135deg, #dc3545, #c82333);
+                    color: white;
+                    padding: 20px 30px;
+                    border-radius: 15px;
+                    box-shadow: 0 10px 40px rgba(220, 53, 69, 0.3);
+                    z-index: 10001;
+                    text-align: center;
+                    backdrop-filter: blur(10px);
+                    animation: fadeInScale 0.3s ease-out;
+                ">
+                    <div style="font-size: 24px; margin-bottom: 10px;">❌</div>
+                    <div style="font-size: 16px; font-weight: 500;">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(errorElement);
+            
+            setTimeout(() => {
+                errorElement.style.animation = 'fadeOutScale 0.3s ease-in';
+                setTimeout(() => {
+                    document.body.removeChild(errorElement);
+                }, 300);
+            }, 4000);
         }
 
         // 데이터 내보내기 (에러 처리 강화)
