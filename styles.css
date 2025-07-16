@@ -1837,6 +1837,11 @@ body {
 .achievement-note {
     flex: 1;
     margin-bottom: 20px;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #333;
+    font-weight: 400;
+    font-style: italic;
 }
 
 .achievement-note-text {
@@ -1845,6 +1850,74 @@ body {
     color: #333;
     font-weight: 400;
     margin-bottom: 15px;
+}
+
+/* 달성 날짜 */
+.achievement-date {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* 푸터 영역 */
+.achievement-footer {
+    padding: 20px 30px;
+    background: white;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.achievement-user .user-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+}
+
+.achievement-user .user-subtitle {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.achievement-branding {
+    text-align: right;
+}
+
+.achievement-branding .brand-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4facfe;
+    margin-bottom: 2px;
+}
+
+.achievement-branding .brand-subtitle {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* 카드 알림 애니메이션 */
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes fadeOutScale {
+    from {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
 }
 
 /* 축하 메시지 */
