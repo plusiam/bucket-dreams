@@ -283,7 +283,7 @@
             };
         }
 
-        // 파일 크기를 사람이 읽기 쉬운 형식으로 변환
+        // 파일 크기를 사람이 읽기 쉽은 형식으로 변환
         function formatFileSize(sizeKB) {
             if (sizeKB < 1024) {
                 return Math.round(sizeKB) + 'KB';
@@ -360,57 +360,6 @@
                 };
                 
                 img.src = URL.createObjectURL(file);
-            });
-        }
-
-        // 스마트 이미지 크롭 함수 (왜곡 방지)
-        function smartCropImage(imageUrl, targetWidth, targetHeight) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    canvas.width = targetWidth;
-                    canvas.height = targetHeight;
-                    
-                    // 원본 이미지 비율
-                    const originalRatio = img.width / img.height;
-                    // 목표 비율
-                    const targetRatio = targetWidth / targetHeight;
-                    
-                    let drawWidth, drawHeight, drawX, drawY;
-                    let sourceX = 0, sourceY = 0, sourceWidth = img.width, sourceHeight = img.height;
-                    
-                    if (originalRatio > targetRatio) {
-                        // 원본이 더 넓음 - 좌우 크롭
-                        sourceWidth = img.height * targetRatio;
-                        sourceX = (img.width - sourceWidth) / 2;
-                        drawWidth = targetWidth;
-                        drawHeight = targetHeight;
-                        drawX = 0;
-                        drawY = 0;
-                    } else {
-                        // 원본이 더 높음 - 상하 크롭
-                        sourceHeight = img.width / targetRatio;
-                        sourceY = (img.height - sourceHeight) / 2;
-                        drawWidth = targetWidth;
-                        drawHeight = targetHeight;
-                        drawX = 0;
-                        drawY = 0;
-                    }
-                    
-                    // 크롭된 이미지 그리기
-                    ctx.drawImage(
-                        img,
-                        sourceX, sourceY, sourceWidth, sourceHeight,
-                        drawX, drawY, drawWidth, drawHeight
-                    );
-                    
-                    resolve(canvas.toDataURL('image/jpeg', 0.9));
-                };
-                
-                img.src = imageUrl;
             });
         }
 
@@ -1180,7 +1129,7 @@
             }
             
             // 특수문자 검증
-            const invalidChars = /[<>\\"'&]/;
+            const invalidChars = /[<>\"'&]/;
             if (invalidChars.test(userName)) {
                 alert('이름에 특수문자는 사용할 수 없습니다.');
                 nameInput.focus();
@@ -1781,7 +1730,7 @@
             }
         }
 
-        // SNS 플랫폼별 카드 옵션 표시 (확장된 버전)
+        // SNS 플랫폼별 카드 옵션 표시 (접근성 개선)
         function showCardOptions(goalId) {
             const modal = document.createElement('div');
             modal.style.cssText = `
@@ -1805,12 +1754,12 @@
                     background: white;
                     border-radius: 20px;
                     padding: 30px;
-                    max-width: 450px;
+                    max-width: 400px;
                     width: 90%;
                     text-align: center;
                     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
                 ">
-                    <h3 style="margin-bottom: 10px; color: #333; font-size: 1.3rem;">📸 달성 카드 만들기</h3>
+                    <h3 style="margin-bottom: 10px; color: #333;">📸 달성 카드 만들기</h3>
                     <p style="color: #666; margin-bottom: 25px; font-size: 0.9rem;">
                         공유할 SNS 플랫폼을 선택하세요
                     </p>
@@ -1830,11 +1779,11 @@
                             justify-content: center;
                             gap: 10px;
                         " aria-label="인스타그램 스토리용 카드 생성">
-                            <span style="font-size: 1.2rem;">📱</span>
+                            <span style="font-size: 1.2rem;">📷</span>
                             인스타그램 스토리 (9:16)
                         </button>
                         
-                        <button onclick="generateSNSCard(${goalId}, 'instagram-post'); this.closest('div').parentElement.parentElement.remove()" style="
+                        <button onclick="generateSNSCard(${goalId}, 'instagram-square'); this.closest('div').parentElement.parentElement.remove()" style="
                             padding: 15px;
                             background: linear-gradient(45deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
                             color: white;
@@ -1847,14 +1796,14 @@
                             align-items: center;
                             justify-content: center;
                             gap: 10px;
-                        " aria-label="인스타그램 포스트용 카드 생성">
-                            <span style="font-size: 1.2rem;">📷</span>
-                            인스타그램 포스트 (1:1)
+                        " aria-label="인스타그램 피드용 정사각형 카드 생성">
+                            <span style="font-size: 1.2rem;">🟦</span>
+                            인스타그램 피드 (1:1)
                         </button>
                         
                         <button onclick="generateSNSCard(${goalId}, 'facebook'); this.closest('div').parentElement.parentElement.remove()" style="
                             padding: 15px;
-                            background: linear-gradient(45deg, #1877f2 0%, #42a5f5 100%);
+                            background: linear-gradient(45deg, #3b5998 0%, #8b9dc3 100%);
                             color: white;
                             border: none;
                             border-radius: 12px;
@@ -1884,14 +1833,14 @@
                             justify-content: center;
                             gap: 10px;
                         " aria-label="기본 카드 생성">
-                            <span style="font-size: 1.2rem;">📄</span>
+                            <span style="font-size: 1.2rem;">📱</span>
                             기본 카드 (2:3)
                         </button>
                     </div>
                     
                     <button onclick="this.closest('div').parentElement.remove()" style="
-                        margin-top: 20px;
-                        padding: 12px 25px;
+                        margin-top: 15px;
+                        padding: 10px 20px;
                         background: #f5f5f5;
                         color: #666;
                         border: none;
@@ -1909,7 +1858,7 @@
             if (firstButton) firstButton.focus();
         }
 
-        // SNS 카드 생성 (확장된 버전)
+        // SNS 카드 생성 (완전 구현 버전)
         async function generateSNSCard(goalId, platform) {
             if (!currentProfile) {
                 showCardError('프로필을 찾을 수 없습니다.');
@@ -1943,15 +1892,14 @@
                 
                 // PNG로 변환 및 다운로드
                 const link = document.createElement('a');
-                const platformName = getPlatformDisplayName(platform);
-                link.download = `${goal.text.replace(/[^a-zA-Z0-9가-힣]/g, '_')}_${platformName}_카드.png`;
+                link.download = `${goal.text.replace(/[^a-zA-Z0-9가-힣]/g, '_')}_${platform}_카드.png`;
                 link.href = canvas.toDataURL('image/png');
                 
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 
-                showCardSuccess(`${platformName} 카드가 다운로드되었습니다!`);
+                showCardSuccess(`${getPlatformDisplayName(platform)} 카드가 다운로드되었습니다!`);
                 
             } catch (error) {
                 console.error('카드 생성 오류:', error);
@@ -1961,18 +1909,123 @@
             }
         }
 
+        // 플랫폼별 카드 크기 반환
+        function getDimensionsByPlatform(platform) {
+            const platformDimensions = {
+                'instagram-story': { width: 405, height: 720 },      // 9:16 비율
+                'instagram-square': { width: 600, height: 600 },     // 1:1 비율
+                'facebook': { width: 764, height: 400 },             // 1.91:1 비율
+                'default': { width: 400, height: 600 }               // 2:3 비율
+            };
+            return platformDimensions[platform] || platformDimensions['default'];
+        }
+
         // 플랫폼 표시명 반환
         function getPlatformDisplayName(platform) {
             const platformNames = {
-                'instagram-story': '인스타그램_스토리',
-                'instagram-post': '인스타그램_포스트',
+                'instagram-story': '인스타그램 스토리',
+                'instagram-square': '인스타그램 피드',
                 'facebook': '페이스북',
                 'default': '기본'
             };
             return platformNames[platform] || '기본';
         }
 
-        // 카드 요소 생성 함수 (확장된 버전)
+        // 플랫폼별 레이아웃 설정
+        function getLayoutConfig(platform, dimensions) {
+            const configs = {
+                'instagram-story': {
+                    headerPadding: '25px 30px 20px',
+                    bodyPadding: '20px 30px',
+                    footerPadding: '20px 30px',
+                    imageHeight: Math.min(300, dimensions.height * 0.4),
+                    titleSize: '1.4rem',
+                    noteSize: '0.95rem'
+                },
+                'instagram-square': {
+                    headerPadding: '30px 35px 25px',
+                    bodyPadding: '25px 35px',
+                    footerPadding: '25px 35px',
+                    imageHeight: Math.min(250, dimensions.height * 0.4),
+                    titleSize: '1.5rem',
+                    noteSize: '1rem'
+                },
+                'facebook': {
+                    headerPadding: '20px 25px 15px',
+                    bodyPadding: '15px 25px',
+                    footerPadding: '15px 25px',
+                    imageHeight: Math.min(150, dimensions.height * 0.35),
+                    titleSize: '1.3rem',
+                    noteSize: '0.9rem'
+                },
+                'default': {
+                    headerPadding: '25px 30px 20px',
+                    bodyPadding: '25px 30px',
+                    footerPadding: '20px 30px',
+                    imageHeight: Math.min(300, dimensions.height * 0.4),
+                    titleSize: '1.5rem',
+                    noteSize: '1rem'
+                }
+            };
+            return configs[platform] || configs['default'];
+        }
+
+        // 스마트 이미지 크롭 함수
+        function getSmartImageStyle(imageUrl, containerWidth, containerHeight) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function() {
+                    const imgRatio = this.width / this.height;
+                    const containerRatio = containerWidth / containerHeight;
+                    
+                    let style = {
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center'
+                    };
+                    
+                    // 이미지 비율에 따른 스마트 크롭 포지션 조정
+                    if (imgRatio > containerRatio) {
+                        // 이미지가 더 넓은 경우 (가로가 긴 이미지)
+                        if (containerRatio < 1) {
+                            // 세로 컨테이너에 가로 이미지 - 중앙 정렬
+                            style.objectPosition = 'center center';
+                        } else {
+                            // 가로 컨테이너에 가로 이미지 - 중앙 정렬
+                            style.objectPosition = 'center center';
+                        }
+                    } else {
+                        // 이미지가 더 높은 경우 (세로가 긴 이미지)
+                        if (containerRatio < 1) {
+                            // 세로 컨테이너에 세로 이미지 - 상단 정렬
+                            style.objectPosition = 'center top';
+                        } else {
+                            // 가로 컨테이너에 세로 이미지 - 중앙 정렬
+                            style.objectPosition = 'center center';
+                        }
+                    }
+                    
+                    // 페이스북 카드의 경우 특별 처리
+                    if (containerRatio > 1.5) {
+                        style.objectPosition = 'center center';
+                    }
+                    
+                    resolve(style);
+                };
+                img.onerror = function() {
+                    resolve({
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center'
+                    });
+                };
+                img.src = imageUrl;
+            });
+        }
+
+        // 카드 요소 생성 함수
         async function createCardElement(goal, platform) {
             const hiddenArea = document.getElementById('hiddenCardArea');
             if (!hiddenArea) {
@@ -1985,44 +2038,50 @@
             // 플랫폼별 카드 크기 설정
             const dimensions = getDimensionsByPlatform(platform);
             
-            // 이미지 처리 (스마트 크롭 적용)
-            let processedImage = null;
+            // 플랫폼별 레이아웃 조정
+            const layoutConfig = getLayoutConfig(platform, dimensions);
+            
+            // 이미지 스타일 계산 (스마트 크롭)
+            let imageStyle = {};
             if (goal.image) {
-                processedImage = await smartCropImage(goal.image, dimensions.imageWidth, dimensions.imageHeight);
+                imageStyle = await getSmartImageStyle(goal.image, dimensions.width, layoutConfig.imageHeight);
             }
             
             // 카드 HTML 생성
             const cardHtml = `
                 <div class="achievement-card ${goal.category}" style="width: ${dimensions.width}px; height: ${dimensions.height}px;">
                     <div class="achievement-card-content">
-                        <div class="achievement-header" style="padding: ${dimensions.padding}px;">
-                            <div class="achievement-title" style="font-size: ${dimensions.titleSize}rem; line-height: 1.2; margin-bottom: 8px;">${escapeHtml(goal.text)}</div>
-                            <div class="achievement-category" style="font-size: ${dimensions.categorySize}rem;">${getCategoryDisplayName(goal.category)}</div>
-                            <div class="achievement-date" style="font-size: ${dimensions.dateSize}rem; margin-top: 5px;">달성일: ${formatDate(goal.completedAt)}</div>
+                        <div class="achievement-header" style="padding: ${layoutConfig.headerPadding};">
+                            <div class="achievement-title" style="font-size: ${layoutConfig.titleSize};">${escapeHtml(goal.text)}</div>
+                            <div class="achievement-category">${getCategoryDisplayName(goal.category)}</div>
+                            <div class="achievement-date">달성일: ${formatDate(goal.completedDate)}</div>
                         </div>
                         
-                        ${processedImage ? `
-                            <div class="achievement-image-container" style="height: ${dimensions.imageHeight}px; overflow: hidden;">
-                                <img src="${processedImage}" alt="달성 인증 사진" class="achievement-image" style="width: 100%; height: 100%; object-fit: cover;">
+                        ${goal.image ? `
+                            <div class="achievement-image-container" style="height: ${layoutConfig.imageHeight}px;">
+                                <img src="${goal.image}" alt="달성 인증 사진" class="achievement-image" style="
+                                    width: ${imageStyle.width};
+                                    height: ${imageStyle.height};
+                                    object-fit: ${imageStyle.objectFit};
+                                    object-position: ${imageStyle.objectPosition};
+                                ">
                             </div>
                         ` : ''}
                         
-                        <div class="achievement-body" style="padding: ${dimensions.padding}px; flex: 1;">
-                            <div class="achievement-note" style="font-size: ${dimensions.noteSize}rem; line-height: 1.5;">
-                                ${goal.completionNote ? `"${escapeHtml(goal.completionNote)}"` : ''}
+                        <div class="achievement-body" style="padding: ${layoutConfig.bodyPadding};">
+                            <div class="achievement-note" style="font-size: ${layoutConfig.noteSize};">
+                                ${goal.note ? `"${escapeHtml(goal.note)}"` : ''}
                             </div>
                         </div>
                         
-                        <div class="achievement-footer" style="padding: ${dimensions.footerPadding}px; border-top: 1px solid #f0f0f0;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div class="achievement-user">
-                                    <div class="user-name" style="font-size: ${dimensions.userNameSize}rem; font-weight: 600; color: #333;">${escapeHtml(currentProfile.name)}</div>
-                                    <div class="user-subtitle" style="font-size: ${dimensions.userSubtitleSize}rem; color: #666;">버킷리스트 달성</div>
-                                </div>
-                                <div class="achievement-branding" style="text-align: right;">
-                                    <div class="brand-name" style="font-size: ${dimensions.brandSize}rem; font-weight: 600; color: #4facfe;">🎯 Bucket Dreams</div>
-                                    <div class="brand-subtitle" style="font-size: ${dimensions.brandSubtitleSize}rem; color: #888;">나의 버킷리스트</div>
-                                </div>
+                        <div class="achievement-footer" style="padding: ${layoutConfig.footerPadding};">
+                            <div class="achievement-user">
+                                <div class="user-name">${escapeHtml(currentProfile.name)}</div>
+                                <div class="user-subtitle">버킷리스트 달성</div>
+                            </div>
+                            <div class="achievement-branding">
+                                <div class="brand-name">🎯 Bucket Dreams</div>
+                                <div class="brand-subtitle">나의 버킷리스트</div>
                             </div>
                         </div>
                     </div>
@@ -2048,78 +2107,6 @@
             }
             
             return cardElement;
-        }
-
-        // 플랫폼별 크기 및 스타일 설정
-        function getDimensionsByPlatform(platform) {
-            const dimensions = {
-                'instagram-story': {
-                    width: 405,
-                    height: 720,
-                    imageWidth: 405,
-                    imageHeight: 300,
-                    padding: 25,
-                    footerPadding: 20,
-                    titleSize: 1.3,
-                    categorySize: 0.8,
-                    dateSize: 0.8,
-                    noteSize: 0.95,
-                    userNameSize: 0.9,
-                    userSubtitleSize: 0.75,
-                    brandSize: 0.85,
-                    brandSubtitleSize: 0.7
-                },
-                'instagram-post': {
-                    width: 500,
-                    height: 500,
-                    imageWidth: 500,
-                    imageHeight: 250,
-                    padding: 30,
-                    footerPadding: 25,
-                    titleSize: 1.4,
-                    categorySize: 0.85,
-                    dateSize: 0.8,
-                    noteSize: 1.0,
-                    userNameSize: 1.0,
-                    userSubtitleSize: 0.8,
-                    brandSize: 0.9,
-                    brandSubtitleSize: 0.75
-                },
-                'facebook': {
-                    width: 600,
-                    height: 314,
-                    imageWidth: 600,
-                    imageHeight: 160,
-                    padding: 20,
-                    footerPadding: 15,
-                    titleSize: 1.2,
-                    categorySize: 0.75,
-                    dateSize: 0.7,
-                    noteSize: 0.85,
-                    userNameSize: 0.85,
-                    userSubtitleSize: 0.7,
-                    brandSize: 0.8,
-                    brandSubtitleSize: 0.65
-                },
-                'default': {
-                    width: 400,
-                    height: 600,
-                    imageWidth: 400,
-                    imageHeight: 250,
-                    padding: 25,
-                    footerPadding: 20,
-                    titleSize: 1.3,
-                    categorySize: 0.8,
-                    dateSize: 0.8,
-                    noteSize: 0.95,
-                    userNameSize: 0.9,
-                    userSubtitleSize: 0.75,
-                    brandSize: 0.85,
-                    brandSubtitleSize: 0.7
-                }
-            };
-            
-            return dimensions[platform] || dimensions.default;
         }
 
         // 카테고리 표시명 반환
@@ -2266,58 +2253,699 @@
             }, 4000);
         }
 
-        // 필수 함수들 추가 (파일 크기 제한으로 인한 간소화)
-        function renderBucketList() {
-            // 버킷리스트 렌더링 로직 (간소화)
-            console.log('버킷리스트 렌더링');
+        // 데이터 내보내기 (에러 처리 강화)
+        function exportCurrentProfile() {
+            if (!currentProfile) return;
+            
+            try {
+                const exportObj = {
+                    profileName: currentProfile.name,
+                    bucketList: currentProfile.bucketList,
+                    exportDate: new Date().toISOString(),
+                    isGuestMode: isGuestMode,
+                    version: '1.0'
+                };
+                
+                const dataStr = JSON.stringify(exportObj, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                const fileName = currentProfile.name ? 
+                    currentProfile.name.replace(/[^a-zA-Z0-9가-힣]/g, '_') : '사용자';
+                link.download = `${fileName}_버킷리스트_백업_${new Date().toISOString().split('T')[0]}.json`;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                URL.revokeObjectURL(url);
+                
+                alert('데이터 내보내기가 완료되었습니다!');
+            } catch (error) {
+                console.error('데이터 내보내기 오류:', error);
+                alert('데이터 내보내기 중 오류가 발생했습니다.');
+            }
         }
 
-        function updateStats() {
-            // 통계 업데이트 로직 (간소화)
-            console.log('통계 업데이트');
+        // 데이터 가져오기 (보안 강화)
+        function importData(file) {
+            if (!file || !currentProfile) return;
+            
+            // 파일 크기 체크 (5MB 제한)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('파일 크기가 너무 큽니다. 5MB 이하의 파일만 가능합니다.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // 데이터 구조 검증
+                    if (!importedData || typeof importedData !== 'object') {
+                        throw new Error('올바르지 않은 파일 형식입니다.');
+                    }
+                    
+                    let bucketList = [];
+                    let profileName = currentProfile.name;
+                    
+                    if (importedData.profileName !== undefined && importedData.bucketList !== undefined) {
+                        bucketList = importedData.bucketList || [];
+                        profileName = importedData.profileName || profileName;
+                    } else if (Array.isArray(importedData)) {
+                        bucketList = importedData;
+                    } else {
+                        throw new Error('올바르지 않은 파일 형식입니다.');
+                    }
+                    
+                    // 데이터 개수 체크
+                    if (bucketList.length > 1000) {
+                        alert('목표가 너무 많습니다. 1000개 이하의 목표만 가져올 수 있습니다.');
+                        return;
+                    }
+                    
+                    // 각 목표 데이터 검증 및 정리
+                    bucketList = bucketList.filter(goal => {
+                        return goal && goal.text && typeof goal.text === 'string';
+                    }).map(goal => ({
+                        id: Date.now() + Math.random(),
+                        text: escapeHtml(goal.text.substring(0, 100)),
+                        category: goal.category || 'other',
+                        completed: Boolean(goal.completed),
+                        completionNote: goal.completionNote ? 
+                            escapeHtml(goal.completionNote.substring(0, 500)) : '',
+                        image: goal.image || null,
+                        createdAt: goal.createdAt || new Date().toISOString(),
+                        completedAt: goal.completedAt || null
+                    }));
+                    
+                    const safeProfileName = escapeHtml(profileName);
+                    if (confirm(`"${safeProfileName}"의 데이터를 현재 프로필에 적용하시겠습니까?\\n(기존 데이터는 사라집니다)`)) {
+                        currentProfile.bucketList = bucketList;
+                        currentProfile.lastAccess = new Date().toISOString();
+                        saveProfiles();
+                        
+                        renderBucketList();
+                        updateStats();
+                        updateDataStats();
+                        renderGallery();
+                        
+                        alert('데이터 가져오기가 완료되었습니다!');
+                    }
+                } catch (error) {
+                    console.error('데이터 가져오기 오류:', error);
+                    alert('올바르지 않은 파일 형식입니다.');
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('파일 읽기 중 오류가 발생했습니다.');
+            };
+            
+            reader.readAsText(file);
         }
 
-        function updateDataStats() {
-            // 데이터 통계 업데이트 로직 (간소화)
-            console.log('데이터 통계 업데이트');
+        // 프로필 관리자 표시
+        function showProfileManager() {
+            renderProfileManagerContent();
+            const modal = document.getElementById('profileManagerModal');
+            if (modal) {
+                modal.style.display = 'block';
+                modal.setAttribute('aria-hidden', 'false');
+            }
         }
 
-        function renderGallery() {
-            // 갤러리 렌더링 로직 (간소화)
-            console.log('갤러리 렌더링');
+        // 프로필 관리자 닫기
+        function closeProfileManager() {
+            const modal = document.getElementById('profileManagerModal');
+            if (modal) {
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+            }
+            renderProfileList();
         }
 
+        // 프로필 관리자 내용 렌더링 (XSS 방지)
+        function renderProfileManagerContent() {
+            const container = document.getElementById('profileManagerContent');
+            if (!container) return;
+            
+            let contentHTML = '<div style="margin-bottom: 15px;">';
+            
+            profiles.forEach(profile => {
+                const isCurrent = currentProfile && profile.id === currentProfile.id;
+                const lastAccess = new Date(profile.lastAccess).toLocaleDateString('ko-KR');
+                const goalCount = profile.bucketList.length;
+                const completedCount = profile.bucketList.filter(goal => goal.completed).length;
+                const safeName = escapeHtml(profile.name);
+                
+                contentHTML += `
+                    <div style="background: ${isCurrent ? '#f0f9ff' : 'white'}; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: ${isCurrent ? '2px solid #4facfe' : '1px solid #ddd'};">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h4>${safeName} ${isCurrent ? '(현재 사용자)' : ''}</h4>
+                                <p style="font-size: 0.8rem; color: #6c757d;">목표: ${goalCount}개 | 완료: ${completedCount}개 | 마지막 접속: ${lastAccess}</p>
+                            </div>
+                            <div>
+                                ${!isCurrent ? `<button onclick="deleteProfile('${profile.id}')" class="btn-danger" style="padding: 4px 8px; font-size: 0.7rem; border-radius: 4px; border: none; cursor: pointer;" aria-label="${safeName} 프로필 삭제">삭제</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            contentHTML += '</div>';
+            
+            contentHTML += `
+                <div style="text-align: center; padding: 10px; background: #fff3cd; border-radius: 8px; color: #856404;">
+                    ⚠️ 삭제된 프로필은 복구할 수 없습니다.<br>
+                    중요한 데이터는 미리 백업하세요.
+                </div>
+            `;
+            
+            container.innerHTML = contentHTML;
+        }
+
+        // 프로필 삭제 (확인 강화)
+        function deleteProfile(profileId) {
+            const profile = profiles.find(p => p.id === profileId);
+            if (!profile) return;
+            
+            const safeName = escapeHtml(profile.name);
+            if (confirm(`정말로 "${safeName}" 프로필을 삭제하시겠습니까?\\n모든 목표가 함께 삭제됩니다.`)) {
+                profiles = profiles.filter(p => p.id !== profileId);
+                saveProfiles();
+                renderProfileManagerContent();
+                alert(`"${safeName}" 프로필이 삭제되었습니다.`);
+            }
+        }
+
+        // 프로필 데이터 초기화 (확인 강화)
+        function clearCurrentProfileData() {
+            if (!currentProfile || isGuestMode) {
+                alert('게스트 모드에서는 이 기능을 사용할 수 없습니다.');
+                return;
+            }
+
+            const goalCount = currentProfile.bucketList.length;
+            if (goalCount === 0) {
+                alert('삭제할 목표가 없습니다.');
+                return;
+            }
+
+            const safeName = escapeHtml(currentProfile.name);
+            if (confirm(`정말로 "${safeName}"의 모든 목표(${goalCount}개)를 삭제하시겠습니까?\\n이 작업은 되돌릴 수 없습니다.`)) {
+                if (confirm('마지막 확인: 정말로 모든 버킷리스트를 삭제하시겠습니까?')) {
+                    currentProfile.bucketList = [];
+                    currentProfile.lastAccess = new Date().toISOString();
+                    saveProfiles();
+                    
+                    renderBucketList();
+                    updateStats();
+                    updateDataStats();
+                    renderGallery();
+                    renderProfileList();
+                    
+                    alert('모든 목표가 삭제되었습니다.');
+                }
+            }
+        }
+
+        // 현재 프로필 삭제 (확인 강화)
+        function deleteCurrentProfile() {
+            if (!currentProfile || isGuestMode) {
+                alert('게스트 모드에서는 이 기능을 사용할 수 없습니다.');
+                return;
+            }
+
+            const profileName = escapeHtml(currentProfile.name);
+            const goalCount = currentProfile.bucketList.length;
+            
+            if (confirm(`"${profileName}" 프로필을 완전히 삭제하시겠습니까?\\n(목표 ${goalCount}개 포함)\\n\\n이 작업은 되돌릴 수 없습니다.`)) {
+                if (confirm(`마지막 확인: "${profileName}" 프로필을 정말로 삭제하시겠습니까?`)) {
+                    profiles = profiles.filter(p => p.id !== currentProfile.id);
+                    saveProfiles();
+                    
+                    alert(`"${profileName}" 프로필이 삭제되었습니다.`);
+                    
+                    currentProfile = null;
+                    showProfileSelector();
+                }
+            }
+        }
+
+        // 모든 프로필 삭제 (확인 강화)
+        function clearAllProfiles() {
+            const profileCount = profiles.length;
+            const totalGoals = profiles.reduce((sum, profile) => sum + profile.bucketList.length, 0);
+            
+            if (profileCount === 0) {
+                alert('삭제할 프로필이 없습니다.');
+                return;
+            }
+
+            if (confirm(`정말로 모든 프로필(${profileCount}개)을 삭제하시겠습니까?\\n총 ${totalGoals}개의 목표가 함께 삭제됩니다.\\n\\n이 작업은 되돌릴 수 없습니다.`)) {
+                if (confirm('마지막 확인: 정말로 모든 데이터를 삭제하시겠습니까?\\n\\n⚠️ 이 작업 후에는 모든 사용자 데이터가 사라집니다!')) {
+                    if (confirm('최종 확인: 백업을 했는지 확인하셨나요?\\n정말로 모든 프로필을 삭제하시겠습니까?')) {
+                        // 모든 관련 저장소 정리
+                        safeLocalStorage('remove', 'bucketListProfiles');
+                        safeLocalStorage('remove', 'bucketListProfiles_backup');
+                        profiles = [];
+                        currentProfile = null;
+                        
+                        alert('모든 프로필이 삭제되었습니다.');
+                        showProfileSelector();
+                    }
+                }
+            }
+        }
+
+        // 프로필 목록 렌더링 (XSS 방지)
         function renderProfileList() {
-            // 프로필 목록 렌더링 로직 (간소화)
-            console.log('프로필 목록 렌더링');
+            const container = document.getElementById('profileList');
+            if (!container) return;
+            
+            if (profiles.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #6c757d;">저장된 프로필이 없습니다.</p>';
+                return;
+            }
+            
+            let listHTML = '';
+            profiles.forEach(profile => {
+                const isCurrent = currentProfile && profile.id === currentProfile.id;
+                const lastAccess = new Date(profile.lastAccess).toLocaleDateString('ko-KR');
+                const goalCount = profile.bucketList.length;
+                const completedCount = profile.bucketList.filter(goal => goal.completed).length;
+                const safeName = escapeHtml(profile.name);
+                
+                listHTML += `
+                    <div class="profile-item ${isCurrent ? 'current' : ''}">
+                        <h4>${safeName} ${isCurrent ? '(현재)' : ''}</h4>
+                        <p>목표: ${goalCount}개 | 완료: ${completedCount}개</p>
+                        <p>마지막 접속: ${lastAccess}</p>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = listHTML;
         }
 
-        // 페이지 로드 시 초기화
-        document.addEventListener('DOMContentLoaded', init);
+        // 버킷리스트 렌더링 (성능 최적화)
+        function renderBucketList() {
+            if (!currentProfile) return;
+            
+            performance.mark('renderBucketList-start');
+            
+            const container = document.getElementById('bucketList');
+            if (!container) return;
+            
+            const filteredList = currentFilter === 'all' 
+                ? currentProfile.bucketList 
+                : currentProfile.bucketList.filter(goal => goal.category === currentFilter);
 
-        // 전역 함수로 노출 (HTML에서 호출하기 위해)
-        window.selectProfile = selectProfile;
-        window.showNewUserModal = showNewUserModal;
-        window.createNewUser = createNewUser;
-        window.cancelNewUser = cancelNewUser;
-        window.startGuestMode = startGuestMode;
-        window.showUserSwitch = showUserSwitch;
-        window.finishSession = finishSession;
-        window.switchTab = switchTab;
-        window.addGoal = addGoal;
-        window.deleteGoal = deleteGoal;
-        window.toggleComplete = toggleComplete;
-        window.editCompletedGoal = editCompletedGoal;
-        window.closeCompletionModal = closeCompletionModal;
-        window.saveCompletion = saveCompletion;
-        window.uploadImageFile = uploadImageFile;
-        window.captureImage = captureImage;
-        window.deleteImage = deleteImage;
-        window.showCardOptions = showCardOptions;
-        window.generateSNSCard = generateSNSCard;
-        window.showImageSettings = showImageSettings;
-        window.hideImageSettings = hideImageSettings;
-        window.saveImageSettings = saveImageSettings;
-        window.resetImageSettings = resetImageSettings;
-        window.updateImageSettingsPreview = updateImageSettingsPreview;
-        window.installPWA = installPWA;
+            // 캐시 확인
+            const currentState = JSON.stringify({
+                filter: currentFilter,
+                list: filteredList.map(goal => ({ id: goal.id, text: goal.text, completed: goal.completed, image: !!goal.image }))
+            });
+            
+            if (currentState === lastFilterState) {
+                return; // 변경사항 없으면 렌더링 스킵
+            }
+            
+            lastFilterState = currentState;
+
+            if (filteredList.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>목표가 없습니다</h3>
+                        <p>${currentFilter === 'all' ? '첫 번째 버킷리스트를 추가해보세요!' : '이 카테고리에 목표를 추가해보세요!'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Fragment 사용으로 성능 최적화
+            const fragment = document.createDocumentFragment();
+            
+            filteredList.forEach(goal => {
+                const div = document.createElement('div');
+                div.className = `bucket-item ${goal.category} ${goal.completed ? 'completed' : ''}`;
+                div.setAttribute('data-goal-id', goal.id);
+                
+                const safeText = escapeHtml(goal.text);
+                const safeNote = goal.completionNote ? escapeHtml(goal.completionNote) : '';
+                
+                div.innerHTML = `
+                    <div class="item-image-container ${goal.image ? 'has-image' : ''}">
+                        ${goal.image ? 
+                            `<img src="${goal.image}" alt="목표 이미지" class="item-image" loading="lazy">
+                             <button class="image-delete-btn" onclick="deleteImage(${goal.id})" title="사진 삭제" aria-label="사진 삭제">🗑️</button>` : 
+                            `<div class="image-placeholder">📷</div>`
+                        }
+                    </div>
+                    
+                    <div class="item-content">
+                        <div class="item-header">
+                            <div class="item-title">${safeText}</div>
+                            <div class="item-controls">
+                                <button class="btn btn-small ${goal.completed ? 'btn-secondary' : 'btn-success'}" 
+                                        onclick="toggleComplete(${goal.id})"
+                                        title="${goal.completed ? '완료 취소' : '완료 표시'}"
+                                        aria-label="${goal.completed ? '완료 취소' : '완료 표시'}">
+                                    ${goal.completed ? '↩️' : '✅'}
+                                </button>
+                                <button class="btn btn-small btn-danger" 
+                                        onclick="deleteGoal(${goal.id})"
+                                        title="삭제"
+                                        aria-label="목표 삭제">🗑️</button>
+                            </div>
+                        </div>
+                        
+                        <div class="category-tag ${goal.category}">${categoryNames[goal.category]}</div>
+                        
+                        ${goal.completed && goal.completionNote ? `
+                            <div class="completion-note">
+                                <div class="completion-note-label">달성 후기</div>
+                                <div class="completion-note-text">${safeNote}</div>
+                                <div class="completion-date">달성일: ${new Date(goal.completedAt).toLocaleDateString('ko-KR')}</div>
+                            </div>
+                        ` : ''}
+                        
+                        ${goal.completed ? `
+                            <div class="completed-controls">
+                                <button class="btn-edit" onclick="editCompletedGoal(${goal.id})" aria-label="달성 정보 편집">
+                                    ✏️ 편집
+                                </button>
+                                <button class="download-card-btn" onclick="showCardOptions(${goal.id})" aria-label="달성 카드 생성">
+                                    🎯 달성 카드
+                                </button>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="image-upload-section ${goal.image ? 'has-image' : ''}">
+                            <div class="upload-buttons">
+                                <label class="upload-btn" for="file-${goal.id}" aria-label="${goal.image ? '사진 교체' : '사진 선택'}">
+                                    📁 ${goal.image ? '교체' : '사진 선택'}
+                                </label>
+                                <button class="upload-btn camera" onclick="captureImage(${goal.id})" aria-label="${isMobile() ? '카메라로 촬영' : '웹캠으로 촬영'}">
+                                    📷 ${isMobile() ? '카메라' : '촬영'}
+                                </button>
+                                ${goal.image ? `
+                                    <button class="upload-btn btn-delete-image" onclick="deleteImage(${goal.id})" aria-label="사진 삭제">
+                                        🗑️ 삭제
+                                    </button>
+                                ` : ''}
+                            </div>
+                            <input type="file" 
+                                   id="file-${goal.id}"
+                                   class="file-input"
+                                   accept="image/*" 
+                                   onchange="uploadImageFile(${goal.id}, this.files[0])">
+                        </div>
+                    </div>
+                `;
+                
+                fragment.appendChild(div);
+            });
+            
+            // 한 번에 DOM 업데이트
+            container.innerHTML = '';
+            container.appendChild(fragment);
+
+            // 지연 로딩 적용
+            setTimeout(() => {
+                addLazyLoading();
+            }, 0);
+            
+            performance.mark('renderBucketList-end');
+            performance.measure('renderBucketList', 'renderBucketList-start', 'renderBucketList-end');
+        }
+
+        // 갤러리 렌더링 (성능 최적화)
+        function renderGallery() {
+            if (!currentProfile) return;
+            
+            const container = document.getElementById('galleryGrid');
+            if (!container) return;
+            
+            const completedGoals = currentProfile.bucketList.filter(goal => goal.completed);
+            const sortSelect = document.getElementById('gallerySort');
+            const sortBy = sortSelect ? sortSelect.value : 'date-desc';
+
+            let sortedGoals = [...completedGoals];
+            switch (sortBy) {
+                case 'date-desc':
+                    sortedGoals.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+                    break;
+                case 'date-asc':
+                    sortedGoals.sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
+                    break;
+                case 'category':
+                    sortedGoals.sort((a, b) => a.category.localeCompare(b.category));
+                    break;
+            }
+
+            if (sortedGoals.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>완료된 목표가 없습니다</h3>
+                        <p>첫 번째 목표를 달성해보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = sortedGoals.map(goal => {
+                const safeText = escapeHtml(goal.text);
+                const safeNote = goal.completionNote ? escapeHtml(goal.completionNote) : '';
+                
+                return `
+                    <div class="gallery-item">
+                        <div class="item-image-container">
+                            ${goal.image ? 
+                                `<img src="${goal.image}" alt="목표 이미지" class="item-image" loading="lazy">` : 
+                                `<div class="image-placeholder">🎯</div>`
+                            }
+                        </div>
+                        
+                        <div class="item-content">
+                            <div class="item-title">${safeText}</div>
+                            <div class="category-tag ${goal.category}">${categoryNames[goal.category]}</div>
+                            
+                            ${goal.completionNote ? `
+                                <div class="completion-note">
+                                    <div class="completion-note-label">달성 후기</div>
+                                    <div class="completion-note-text">${safeNote}</div>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="completion-date">달성일: ${new Date(goal.completedAt).toLocaleDateString('ko-KR')}</div>
+                            
+                            <div class="completed-controls">
+                                <button class="btn-edit" onclick="editCompletedGoal(${goal.id})" aria-label="달성 정보 편집">
+                                    ✏️ 편집
+                                </button>
+                                <button class="download-card-btn" onclick="showCardOptions(${goal.id})" aria-label="달성 카드 생성">
+                                    🎯 달성 카드
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 지연 로딩 적용
+            setTimeout(() => {
+                addLazyLoading();
+            }, 0);
+        }
+
+        // 통계 업데이트 (최적화)
+        function updateStats() {
+            if (!currentProfile) return;
+            
+            const total = currentProfile.bucketList.length;
+            const completed = currentProfile.bucketList.filter(goal => goal.completed).length;
+            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            const elements = {
+                total: document.getElementById('totalCount'),
+                completed: document.getElementById('completedCount'),
+                progress: document.getElementById('progressPercent')
+            };
+
+            // 배치 업데이트로 리플로우 최소화
+            requestAnimationFrame(() => {
+                if (elements.total) elements.total.textContent = total;
+                if (elements.completed) elements.completed.textContent = completed;
+                if (elements.progress) elements.progress.textContent = progress + '%';
+            });
+        }
+
+        // 데이터 통계 업데이트 (최적화)
+        function updateDataStats() {
+            if (!currentProfile) return;
+            
+            const total = currentProfile.bucketList.length;
+            const completed = currentProfile.bucketList.filter(goal => goal.completed).length;
+            const dataSize = JSON.stringify(currentProfile.bucketList).length;
+            const sizeInKB = Math.round(dataSize / 1024 * 100) / 100;
+            
+            const elements = {
+                total: document.getElementById('dataStatsTotal'),
+                completed: document.getElementById('dataStatsCompleted'),
+                size: document.getElementById('dataStatsSize')
+            };
+
+            // 배치 업데이트로 리플로우 최소화
+            requestAnimationFrame(() => {
+                if (elements.total) elements.total.textContent = total;
+                if (elements.completed) elements.completed.textContent = completed;
+                if (elements.size) elements.size.textContent = sizeInKB + 'KB';
+            });
+        }
+
+        // 전체 리스트 PDF 다운로드 (간소화된 버전)
+        function downloadAsImage() {
+            if (!currentProfile || currentProfile.bucketList.length === 0) {
+                alert('다운로드할 목표가 없습니다.');
+                return;
+            }
+            
+            alert('PDF 다운로드 기능은 개발 중입니다.');
+        }
+
+        // 페이지 로드 시 초기화 (에러 처리 강화)
+        window.addEventListener('load', function() {
+            try {
+                init();
+            } catch (error) {
+                console.error('앱 초기화 실패:', error);
+                alert('앱을 초기화하는 중 오류가 발생했습니다. 페이지를 새로고침해주세요.');
+            }
+        });
+
+        // 페이지 언로드 시 정리
+        window.addEventListener('beforeunload', function() {
+            // 타이머 정리
+            clearTimeout(autoLogoutTimer);
+            clearTimeout(autoLogoutWarningTimer);
+            
+            // 관찰자 정리
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
+            
+            // 현재 프로필 마지막 접속 시간 업데이트
+            if (currentProfile && !isGuestMode) {
+                currentProfile.lastAccess = new Date().toISOString();
+                saveProfiles();
+            }
+        });
+
+        // 버튼 이벤트 리스너들 (DOMContentLoaded에서 안전하게 등록)
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = {
+                settingsBtn: showImageSettings,
+                userSwitchBtn: showUserSwitch,
+                finishBtn: finishSession,
+                addGoalBtn: addGoal,
+                cancelModalBtn: closeCompletionModal,
+                saveModalBtn: saveCompletion,
+                cancelNewUserBtn: cancelNewUser,
+                createUserBtn: createNewUser,
+                profileManagerBtn: showProfileManager,
+                closeProfileManagerBtn: closeProfileManager,
+                exportBtn: exportCurrentProfile,
+                clearDataBtn: clearCurrentProfileData,
+                deleteProfileBtn: deleteCurrentProfile,
+                clearAllBtn: clearAllProfiles,
+                downloadPdfBtn: downloadAsImage,
+                installBtn: installPWA,
+                extendBtn: () => {
+                    resetAutoLogout();
+                    alert('세션이 연장되었습니다.');
+                }
+            };
+
+            // 버튼 이벤트 리스너 등록
+            Object.entries(buttons).forEach(([id, handler]) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('click', handler);
+                }
+            });
+            
+            // 이미지 설정 모달 실시간 업데이트 이벤트
+            const qualitySlider = document.getElementById('qualitySlider');
+            const maxWidthInput = document.getElementById('maxWidthInput');
+            const formatSelect = document.getElementById('formatSelect');
+            const autoCompressToggle = document.getElementById('autoCompressToggle');
+            
+            if (qualitySlider) {
+                qualitySlider.addEventListener('input', updateImageSettingsPreview);
+            }
+            if (maxWidthInput) {
+                maxWidthInput.addEventListener('input', updateImageSettingsPreview);
+            }
+            if (formatSelect) {
+                formatSelect.addEventListener('change', updateImageSettingsPreview);
+            }
+            if (autoCompressToggle) {
+                autoCompressToggle.addEventListener('change', updateImageSettingsPreview);
+            }
+            
+            // 모달 외부 클릭 시 닫기
+            const imageSettingsModal = document.getElementById('imageSettingsModal');
+            if (imageSettingsModal) {
+                imageSettingsModal.addEventListener('click', function(e) {
+                    if (e.target === imageSettingsModal) {
+                        hideImageSettings();
+                    }
+                });
+            }
+            
+            // ESC 키로 모달 닫기
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const modal = document.getElementById('imageSettingsModal');
+                    if (modal && modal.style.display === 'block') {
+                        hideImageSettings();
+                    }
+                }
+            });
+
+            // 파일 입력 이벤트
+            const importBtn = document.getElementById('importBtn');
+            const importFile = document.getElementById('importFile');
+            
+            if (importBtn && importFile) {
+                importBtn.addEventListener('click', () => importFile.click());
+                
+                importFile.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        importData(file);
+                        e.target.value = ''; // 파일 입력 초기화
+                    }
+                });
+            }
+
+            // 갤러리 정렬 이벤트
+            const gallerySort = document.getElementById('gallerySort');
+            if (gallerySort) {
+                gallerySort.addEventListener('change', renderGallery);
+            }
+
+            // 탭 전환 이벤트 (이벤트 위임 사용)
+            document.addEventListener('click', function(e) {
+                const navTab = e.target.closest('.nav-tab');
+                if (navTab && navTab.dataset.tab) {
+                    switchTab(navTab.dataset.tab);
+                }
+            });
+        });
