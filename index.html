@@ -332,6 +332,95 @@
         </div>
     </div>
 
+    <!-- 이미지 설정 모달 -->
+    <div class="modal" id="imageSettingsModal" role="dialog" aria-labelledby="imageSettingsTitle" aria-hidden="true" aria-modal="true">
+        <div class="modal-content" style="max-width: 600px;">
+            <header class="modal-header">
+                <h2 class="modal-title" id="imageSettingsTitle">🎛️ 이미지 설정</h2>
+                <p class="modal-subtitle">이미지 압축 및 품질 설정을 조정합니다</p>
+            </header>
+            <form class="modal-form image-settings-form" role="form">
+                <div class="settings-group">
+                    <label for="qualitySlider">압축 품질</label>
+                    <div class="slider-container">
+                        <input type="range" id="qualitySlider" min="0.1" max="1" step="0.1" value="0.8" aria-describedby="quality-help">
+                        <span class="slider-value" id="qualityValue">0.8</span>
+                    </div>
+                    <div id="quality-help" class="setting-help">높을수록 품질이 좋지만 파일 크기가 커집니다 (0.1 = 최저품질, 1.0 = 최고품질)</div>
+                </div>
+                
+                <div class="settings-group">
+                    <label for="maxWidthInput">최대 너비 (px)</label>
+                    <input type="number" id="maxWidthInput" min="480" max="4096" step="120" value="1200" aria-describedby="width-help">
+                    <div id="width-help" class="setting-help">이미지의 최대 너비를 설정합니다 (480px ~ 4096px)</div>
+                </div>
+                
+                <div class="settings-group">
+                    <label for="formatSelect">이미지 형식</label>
+                    <select id="formatSelect" aria-describedby="format-help">
+                        <option value="jpeg">JPEG (호환성 좋음)</option>
+                        <option value="webp">WebP (용량 작음)</option>
+                        <option value="png">PNG (무손실 압축)</option>
+                    </select>
+                    <div id="format-help" class="setting-help">WebP는 더 작은 파일 크기를 제공하지만 일부 구형 브라우저에서 지원하지 않을 수 있습니다</div>
+                </div>
+                
+                <div class="settings-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="autoCompressToggle" checked aria-describedby="compress-help">
+                        <span class="checkbox-text">자동 압축 활성화</span>
+                    </label>
+                    <div id="compress-help" class="setting-help">비활성화하면 원본 이미지를 그대로 저장합니다</div>
+                </div>
+                
+                <div class="settings-group">
+                    <label for="cameraResolutionSelect">카메라 해상도</label>
+                    <select id="cameraResolutionSelect" aria-describedby="resolution-help">
+                        <option value="hd">HD (1280x720)</option>
+                        <option value="fhd">Full HD (1920x1080)</option>
+                        <option value="4k">4K (3840x2160)</option>
+                    </select>
+                    <div id="resolution-help" class="setting-help">카메라 촬영 시 요청할 해상도입니다. 기기가 지원하지 않으면 자동으로 조정됩니다</div>
+                </div>
+                
+                <div class="settings-preview">
+                    <h4>현재 설정 미리보기</h4>
+                    <div class="preview-info">
+                        <span class="preview-item">품질: <strong id="previewQuality">0.8</strong></span>
+                        <span class="preview-item">최대 너비: <strong id="previewWidth">1200px</strong></span>
+                        <span class="preview-item">형식: <strong id="previewFormat">JPEG</strong></span>
+                        <span class="preview-item">압축: <strong id="previewCompress">활성화</strong></span>
+                    </div>
+                    <div class="file-size-estimate">
+                        <h5>파일 크기 예상</h5>
+                        <div class="size-comparison">
+                            <div class="size-item">
+                                <span class="size-label">원본 예상:</span>
+                                <span class="size-value" id="originalSizeEstimate">-</span>
+                            </div>
+                            <div class="size-item">
+                                <span class="size-label">압축 후:</span>
+                                <span class="size-value" id="compressedSizeEstimate">-</span>
+                            </div>
+                            <div class="size-item compression-ratio">
+                                <span class="size-label">압축률:</span>
+                                <span class="size-value" id="compressionRatio">-</span>
+                            </div>
+                        </div>
+                        <div class="estimate-note">
+                            <small>⚠️ 예상 크기는 이미지 내용에 따라 달라질 수 있습니다</small>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-cancel" id="cancelImageSettingsBtn" aria-label="설정 취소">취소</button>
+                <button class="btn-modal btn-secondary" id="resetImageSettingsBtn" aria-label="기본값으로 재설정">기본값</button>
+                <button class="btn-modal btn-confirm" id="saveImageSettingsBtn" aria-label="설정 저장">저장</button>
+            </div>
+        </div>
+    </div>
+
     <!-- PWA 설치 버튼 -->
     <button class="install-btn" id="installBtn" aria-label="앱을 기기에 설치하기" aria-hidden="true">📱 앱 설치</button>
 
