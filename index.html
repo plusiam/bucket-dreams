@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>🎯 Bucket Dreams - 나의 버킷리스트</title>
     <meta name="description" content="개인 및 공용 기기에서 사용할 수 있는 버킷리스트 관리 앱. 목표를 설정하고 달성 과정을 기록하세요.">
-    <meta name="keywords" content="버킷리스트, 목표관리, 생산성, 개인계획, 달성">
+    <meta name="keywords" content="버킷리스트, 목표관리, 생산성, 개인계획, 달성, 꿈">
     <meta name="author" content="룰루랄라 한기쌤">
     
     <!-- PWA 설정 -->
@@ -50,6 +50,7 @@
     <!-- 외부 라이브러리 (지연 로딩) -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" as="script">
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" as="script">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     
     <!-- 스타일시트 -->
     <link rel="stylesheet" href="styles.css">
@@ -110,7 +111,10 @@
 
         <nav class="nav-tabs" role="tablist" aria-label="메인 탭 메뉴">
             <button class="nav-tab active" data-tab="goals" role="tab" aria-selected="true" aria-controls="goals-tab" tabindex="0" id="goals-tab-button">📝 목표 관리</button>
+            <button class="nav-tab" data-tab="journey" role="tab" aria-selected="false" aria-controls="journey-tab" tabindex="-1" id="journey-tab-button">🌟 꿈의 여정</button>
             <button class="nav-tab" data-tab="gallery" role="tab" aria-selected="false" aria-controls="gallery-tab" tabindex="-1" id="gallery-tab-button">🏆 완료 갤러리</button>
+            <button class="nav-tab" data-tab="insights" role="tab" aria-selected="false" aria-controls="insights-tab" tabindex="-1" id="insights-tab-button">📊 인사이트</button>
+            <button class="nav-tab" data-tab="social" role="tab" aria-selected="false" aria-controls="social-tab" tabindex="-1" id="social-tab-button">👨‍👩‍👧‍👦 소셜</button>
             <button class="nav-tab" data-tab="data" role="tab" aria-selected="false" aria-controls="data-tab" tabindex="-1" id="data-tab-button">💾 데이터 관리</button>
         </nav>
 
@@ -134,6 +138,16 @@
                             <option value="other">✨ 기타</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label for="emotionSelect">현재 기분</label>
+                        <select id="emotionSelect" aria-label="목표에 대한 현재 감정 선택">
+                            <option value="excited">😍 설렘</option>
+                            <option value="determined">💪 결단</option>
+                            <option value="curious">🤔 호기심</option>
+                            <option value="anxious">😰 불안</option>
+                            <option value="hopeful">🌟 희망</option>
+                        </select>
+                    </div>
                     <button type="button" class="btn btn-primary" id="addGoalBtn" aria-label="새 목표 추가하기">추가</button>
                 </form>
 
@@ -144,8 +158,16 @@
                     <button class="filter-btn" data-category="career" role="button" tabindex="0" aria-pressed="false">💼 커리어</button>
                     <button class="filter-btn" data-category="relationship" role="button" tabindex="0" aria-pressed="false">👥 인간관계</button>
                     <button class="filter-btn" data-category="health" role="button" tabindex="0" aria-pressed="false">💪 건강</button>
-                    <button class="filter-btn" data-category="other" role="button" tabindex="0" aria-pressed="false">✨ 기타</button>
+                    <button class="filter-btn" data-category="other" role="button" tabindex="0" aria-pressed="false">✨기타</button>
                 </nav>
+
+                <!-- 스마트 추천 섹션 -->
+                <div class="smart-recommendations" id="smartRecommendations">
+                    <h3>💡 개인 맞춤 추천</h3>
+                    <div class="recommendation-cards" id="recommendationCards">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
             </div>
 
             <div class="content">
@@ -162,6 +184,10 @@
                         <div class="stat-number" id="progressPercent" aria-live="polite">0%</div>
                         <div class="stat-label">진행률</div>
                     </div>
+                    <div class="stat-card motivation-card" role="img" aria-label="동기 지수">
+                        <div class="stat-number" id="motivationIndex" aria-live="polite">0</div>
+                        <div class="stat-label">동기 지수</div>
+                    </div>
                 </section>
 
                 <section class="bucket-list" id="bucketList" aria-label="버킷리스트 목록" role="region">
@@ -177,6 +203,55 @@
             </div>
         </section>
 
+        <!-- 꿈의 여정 탭 -->
+        <section class="tab-content" id="journey-tab" role="tabpanel" aria-labelledby="journey-tab-button">
+            <div class="journey-content">
+                <div class="journey-header">
+                    <h2>🌟 나의 꿈 여정</h2>
+                    <p>지금까지 걸어온 길과 앞으로 나아갈 방향을 되돌아보세요</p>
+                </div>
+                
+                <div class="journey-stats">
+                    <div class="journey-stat-card">
+                        <div class="stat-number" id="journeyDays">0</div>
+                        <div class="stat-label">꿈을 키운 일수</div>
+                    </div>
+                    <div class="journey-stat-card">
+                        <div class="stat-number" id="journeyStreak">0</div>
+                        <div class="stat-label">연속 달성 기록</div>
+                    </div>
+                    <div class="journey-stat-card">
+                        <div class="stat-number" id="journeyMilestones">0</div>
+                        <div class="stat-label">달성한 마일스톤</div>
+                    </div>
+                </div>
+                
+                <div class="timeline-container">
+                    <h3>📅 달성 타임라인</h3>
+                    <div class="timeline" id="achievementTimeline">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
+                
+                <div class="category-progress-section">
+                    <h3>📊 카테고리별 진행 현황</h3>
+                    <div class="category-progress-grid" id="categoryProgressGrid">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
+                
+                <div class="inspiration-section">
+                    <div class="daily-inspiration" id="dailyInspiration">
+                        <h3>✨ 오늘의 영감</h3>
+                        <blockquote id="inspirationQuote">
+                            "꿈을 이루는 것이 중요한 게 아니라, 꿈을 향해 걸어가는 여정 자체가 당신을 성장시킵니다."
+                        </blockquote>
+                        <cite id="inspirationAuthor">- 버킷 드림즈</cite>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- 완료 갤러리 탭 -->
         <section class="tab-content" id="gallery-tab" role="tabpanel" aria-labelledby="gallery-tab-button">
             <div class="content">
@@ -186,6 +261,7 @@
                         <option value="date-desc">최신 완료순</option>
                         <option value="date-asc">오래된 완료순</option>
                         <option value="category">카테고리별</option>
+                        <option value="emotion">감정별</option>
                     </select>
                 </div>
                 
@@ -195,6 +271,92 @@
                         <p>첫 번째 목표를 달성해보세요!</p>
                     </div>
                 </section>
+            </div>
+        </section>
+
+        <!-- 인사이트 탭 -->
+        <section class="tab-content" id="insights-tab" role="tabpanel" aria-labelledby="insights-tab-button">
+            <div class="insights-content">
+                <div class="insights-header">
+                    <h2>📊 나의 꿈 분석</h2>
+                    <p>데이터로 보는 나의 성장과 패턴</p>
+                </div>
+                
+                <div class="insights-grid">
+                    <div class="insight-card">
+                        <h3>📈 달성률 분석</h3>
+                        <canvas id="achievementChart"></canvas>
+                    </div>
+                    
+                    <div class="insight-card">
+                        <h3>😊 감정 패턴</h3>
+                        <canvas id="emotionChart"></canvas>
+                    </div>
+                    
+                    <div class="insight-card">
+                        <h3>⏰ 달성 시간 패턴</h3>
+                        <canvas id="timePatternChart"></canvas>
+                    </div>
+                    
+                    <div class="insight-card">
+                        <h3>🎯 카테고리 분포</h3>
+                        <canvas id="categoryDistributionChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="smart-insights">
+                    <h3>🔍 개인화된 인사이트</h3>
+                    <div class="insight-items" id="personalInsights">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
+                
+                <div class="prediction-section">
+                    <h3>🔮 달성 예측</h3>
+                    <div class="prediction-cards" id="predictionCards">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 소셜 탭 -->
+        <section class="tab-content" id="social-tab" role="tabpanel" aria-labelledby="social-tab-button">
+            <div class="social-content">
+                <div class="social-header">
+                    <h2>👨‍👩‍👧‍👦 함께하는 꿈</h2>
+                    <p>가족과 친구들과 꿈을 공유하고 응원받으세요</p>
+                </div>
+                
+                <div class="family-section">
+                    <h3>👨‍👩‍👧‍👦 가족 연결</h3>
+                    <div class="family-members" id="familyMembers">
+                        <!-- 동적 생성 -->
+                    </div>
+                    <button class="btn btn-primary" id="addFamilyBtn">가족 구성원 추가</button>
+                </div>
+                
+                <div class="shared-goals-section">
+                    <h3>🤝 공유된 목표</h3>
+                    <div class="shared-goals" id="sharedGoals">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
+                
+                <div class="family-challenges-section">
+                    <h3>🏆 가족 도전</h3>
+                    <div class="family-challenges" id="familyChallenges">
+                        <!-- 동적 생성 -->
+                    </div>
+                    <button class="btn btn-success" id="createChallengeBtn">새 도전 만들기</button>
+                </div>
+                
+                <div class="encouragement-section">
+                    <h3>💪 응원 메시지</h3>
+                    <div class="encouragement-wall" id="encouragementWall">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -208,6 +370,7 @@
                         <button class="btn btn-info" id="importBtn" aria-label="JSON 파일에서 데이터 가져오기">📥 데이터 가져오기</button>
                         <input type="file" id="importFile" accept=".json" style="display: none;" aria-label="데이터 파일 선택">
                         <button class="btn btn-warning" id="profileManagerBtn" aria-label="프로필 관리자 열기">⚙️ 프로필 관리</button>
+                        <button class="btn btn-info" id="monthlyReflectionBtn" aria-label="월간 회고 생성">📝 월간 회고</button>
                     </div>
                     
                     <div style="margin-top: 15px;">
@@ -264,6 +427,10 @@
                             <div class="stat-number" id="dataStatsSize" aria-live="polite">0KB</div>
                             <div class="stat-label">데이터 크기</div>
                         </div>
+                        <div class="stat-card" role="img" aria-label="감정 평균">
+                            <div class="stat-number" id="dataStatsEmotion" aria-live="polite">😊</div>
+                            <div class="stat-label">평균 감정</div>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -276,7 +443,7 @@
         <button id="extendBtn" aria-label="세션 연장하기">연장</button>
     </div>
 
-    <!-- 완료/편집 모달 (날짜 입력 기능 포함) -->
+    <!-- 완료/편집 모달 (감정 추가) -->
     <div class="modal" id="completionModal" role="dialog" aria-labelledby="modalTitle" aria-describedby="modalSubtitle" aria-hidden="true" aria-modal="true">
         <div class="modal-content">
             <header class="modal-header">
@@ -286,9 +453,23 @@
             <form class="modal-form" role="form">
                 <label for="completionDate">달성 날짜</label>
                 <input type="date" id="completionDate" aria-required="true" max="">
+                
+                <label for="completionEmotion">달성 후 기분</label>
+                <select id="completionEmotion" aria-required="true">
+                    <option value="proud">😎 뿌듯함</option>
+                    <option value="happy">😊 행복</option>
+                    <option value="excited">🤩 신남</option>
+                    <option value="grateful">🙏 감사</option>
+                    <option value="satisfied">😌 만족</option>
+                    <option value="relieved">😮‍💨 안도</option>
+                </select>
+                
                 <label for="completionNote">달성 후기</label>
                 <textarea id="completionNote" placeholder="어떤 기분이었나요? 어떤 경험이었는지 간단히 적어보세요." aria-describedby="note-help" maxlength="500"></textarea>
                 <div id="note-help" class="sr-only">선택사항입니다. 달성 후 느낌이나 경험을 자유롭게 작성하세요.</div>
+                
+                <label for="meaningfulAspect">이 경험에서 가장 의미 있었던 점</label>
+                <textarea id="meaningfulAspect" placeholder="이 목표를 달성하면서 배운 점이나 느낀 점을 적어보세요." maxlength="300"></textarea>
             </form>
             <div class="modal-buttons">
                 <button class="btn-modal btn-cancel" id="cancelModalBtn" aria-label="모달 취소">취소</button>
@@ -312,6 +493,60 @@
             <div class="modal-buttons">
                 <button class="btn-modal btn-cancel" id="cancelNewUserBtn" aria-label="사용자 생성 취소">취소</button>
                 <button class="btn-modal btn-confirm" id="createUserBtn" aria-label="새 사용자 생성">생성</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 감정 체크인 모달 -->
+    <div class="modal" id="emotionCheckModal" role="dialog" aria-labelledby="emotionCheckTitle" aria-hidden="true" aria-modal="true">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 class="modal-title" id="emotionCheckTitle">😊 오늘의 감정 체크인</h2>
+                <p class="modal-subtitle">목표에 대한 현재 기분을 알려주세요</p>
+            </header>
+            <form class="modal-form" role="form">
+                <label for="currentEmotion">현재 감정</label>
+                <select id="currentEmotion" aria-required="true">
+                    <option value="excited">😍 설렘</option>
+                    <option value="determined">💪 결단력</option>
+                    <option value="motivated">🔥 동기부여</option>
+                    <option value="anxious">😰 불안</option>
+                    <option value="overwhelmed">😵 압도됨</option>
+                    <option value="hopeful">🌟 희망적</option>
+                    <option value="neutral">😐 보통</option>
+                </select>
+                
+                <label for="motivationLevel">동기 수준 (1-10)</label>
+                <input type="range" id="motivationLevel" min="1" max="10" value="5" class="slider">
+                <div class="slider-value" id="motivationValue">5</div>
+                
+                <label for="energyLevel">에너지 수준 (1-10)</label>
+                <input type="range" id="energyLevel" min="1" max="10" value="5" class="slider">
+                <div class="slider-value" id="energyValue">5</div>
+                
+                <label for="emotionNote">오늘의 한마디</label>
+                <textarea id="emotionNote" placeholder="목표에 대한 현재 생각이나 느낌을 자유롭게 적어보세요." maxlength="200"></textarea>
+            </form>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-cancel" id="cancelEmotionBtn" aria-label="감정 체크인 취소">나중에</button>
+                <button class="btn-modal btn-confirm" id="saveEmotionBtn" aria-label="감정 기록 저장">기록하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 월간 회고 모달 -->
+    <div class="modal" id="monthlyReflectionModal" role="dialog" aria-labelledby="reflectionTitle" aria-hidden="true" aria-modal="true">
+        <div class="modal-content reflection-modal">
+            <header class="modal-header">
+                <h2 class="modal-title" id="reflectionTitle">📝 이달의 회고</h2>
+                <p class="modal-subtitle">지난 한 달을 돌아보며 성찰해보세요</p>
+            </header>
+            <div class="reflection-content" id="reflectionContent">
+                <!-- 동적 생성 -->
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-secondary" id="exportReflectionBtn" aria-label="회고 내용 내보내기">📄 내보내기</button>
+                <button class="btn-modal btn-confirm" id="closeReflectionBtn" aria-label="회고 모달 닫기">닫기</button>
             </div>
         </div>
     </div>
@@ -390,26 +625,6 @@
                         <span class="preview-item">최대 너비: <strong id="previewWidth">1200px</strong></span>
                         <span class="preview-item">형식: <strong id="previewFormat">JPEG</strong></span>
                         <span class="preview-item">압축: <strong id="previewCompress">활성화</strong></span>
-                    </div>
-                    <div class="file-size-estimate">
-                        <h5>파일 크기 예상</h5>
-                        <div class="size-comparison">
-                            <div class="size-item">
-                                <span class="size-label">원본 예상:</span>
-                                <span class="size-value" id="originalSizeEstimate">-</span>
-                            </div>
-                            <div class="size-item">
-                                <span class="size-label">압축 후:</span>
-                                <span class="size-value" id="compressedSizeEstimate">-</span>
-                            </div>
-                            <div class="size-item compression-ratio">
-                                <span class="size-label">압축률:</span>
-                                <span class="size-value" id="compressionRatio">-</span>
-                            </div>
-                        </div>
-                        <div class="estimate-note">
-                            <small>⚠️ 예상 크기는 이미지 내용에 따라 달라질 수 있습니다</small>
-                        </div>
                     </div>
                 </div>
             </form>
@@ -543,6 +758,41 @@
                 transform: translate(-50%, -50%);
                 opacity: 1;
             }
+        }
+        
+        /* 슬라이더 스타일 */
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+        }
+        
+        .slider-value {
+            text-align: center;
+            font-weight: 600;
+            color: #4facfe;
+            margin-top: 5px;
         }
     </style>
 </body>
