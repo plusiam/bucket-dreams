@@ -920,70 +920,88 @@
             }
         }
 
-        // PWA 설정 (보안 강화)
+        // PWA 설정 (개선된 버전) - 상대 경로 사용
         function setupPWA() {
             if ('serviceWorker' in navigator) {
-                const swCode = `
-                    const CACHE_NAME = 'bucket-dreams-v1.1';
-                    const urlsToCache = [
-                        '/',
-                        '/index.html',
-                        '/styles.css',
-                        '/script.js'
-                    ];
-                    
-                    self.addEventListener('install', event => {
-                        event.waitUntil(
-                            caches.open(CACHE_NAME)
-                                .then(cache => {
-                                    return cache.addAll(urlsToCache);
-                                })
-                                .catch(err => console.error('캐시 저장 실패:', err))
-                        );
-                    });
-                    
-                    self.addEventListener('fetch', event => {
-                        // HTTPS만 캐시
-                        if (event.request.url.startsWith('https:')) {
-                            event.respondWith(
-                                caches.match(event.request)
-                                    .then(response => {
-                                        return response || fetch(event.request);
-                                    })
-                                    .catch(err => {
-                                        console.error('Fetch 실패:', err);
-                                        return new Response('오프라인 상태입니다.', {
-                                            status: 503,
-                                            statusText: 'Service Unavailable'
-                                        });
-                                    })
-                            );
-                        }
-                    });
-                `;
-                
-                const blob = new Blob([swCode], { type: 'application/javascript' });
-                const swUrl = URL.createObjectURL(blob);
-                
-                navigator.serviceWorker.register(swUrl)
+                // Service Worker 등록 (상대 경로 사용)
+                navigator.serviceWorker.register('./sw.js')
                     .then(registration => {
-                        console.log('SW registered:', registration.scope);
+                        console.log('SW registered successfully:', registration.scope);
+                        
+                        // 업데이트 확인
+                        registration.addEventListener('updatefound', () => {
+                            console.log('SW: New version found');
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('SW: New version installed');
+                                    // 사용자에게 새 버전 알림 (선택사항)
+                                    if (confirm('새 버전이 있습니다. 업데이트하시겠습니까?')) {
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
                     })
                     .catch(error => {
-                        console.log('SW registration failed:', error);
+                        console.error('SW registration failed:', error);
                     });
+                
+                // Service Worker 메시지 수신
+                navigator.serviceWorker.addEventListener('message', event => {
+                    if (event.data && event.data.type === 'CACHE_UPDATED') {
+                        console.log('SW: Cache updated');
+                    }
+                });
+                
+                // 페이지 로드 시 Service Worker 컨트롤러 확인
+                if (navigator.serviceWorker.controller) {
+                    console.log('SW: Page is controlled by service worker');
+                } else {
+                    console.log('SW: Page is not controlled by service worker');
+                }
+            } else {
+                console.log('SW: Service Worker not supported');
             }
 
+            // PWA 설치 가능성 체크
+            const checkPWAInstallability = () => {
+                // 기본 PWA 요구사항 체크
+                const isHTTPS = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+                const hasManifest = document.querySelector('link[rel="manifest"]') !== null;
+                const hasSW = 'serviceWorker' in navigator;
+                
+                console.log('PWA 설치 가능성 체크:', {
+                    isHTTPS,
+                    hasManifest,
+                    hasSW,
+                    userAgent: navigator.userAgent
+                });
+                
+                return isHTTPS && hasManifest && hasSW;
+            };
+            
             // PWA 설치 프롬프트
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
+                console.log('PWA 설치 프롬프트 이벤트 수신');
+                
                 const installBtn = document.getElementById('installBtn');
                 if (installBtn) {
                     installBtn.style.display = 'block';
                     installBtn.setAttribute('aria-hidden', 'false');
+                    console.log('설치 버튼 활성화');
                 }
             });
+            
+            // PWA 설치 가능성 체크 실행
+            if (checkPWAInstallability()) {
+                console.log('PWA 설치 조건 만족');
+            } else {
+                console.log('PWA 설치 조건 불만족');
+            }
 
             // 설치 완료 감지
             window.addEventListener('appinstalled', (e) => {
