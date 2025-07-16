@@ -2,17 +2,83 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>🎯 Bucket Dreams - 나의 버킷리스트</title>
     <meta name="description" content="개인 및 공용 기기에서 사용할 수 있는 버킷리스트 관리 앱. 목표를 설정하고 달성 과정을 기록하세요.">
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIuuCmOydmCDrsoTsgrHrpqzsirDtirgiLAogICJzaG9ydF9uYW1lIjogIuuyhOyCreDwJHRhvEhhdmvOr0dpTyIsCiAgImRlc2NyaXB0aW9uIjogIuydscDGDeyWReEhCKRZP2JCJOyGNeygz+ydBQUZQIOm2yC8JCl0dLXs2AyY6xKrQ1BBTiLAogICJzdGFydF91cmwiOiAiLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZmZmZmZiIsCiAgInRoZW1lX2NvbG9yIjogIiM0ZmFjZmUiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI2YVdSMGFEMGlNakEwSWlCb1pXbG5hSFE5SWpJd05DSWdkbWxsZDBKdmVEMGlNQ0F3SURJd05DQXlNRFFpSUdacGJHdzlJaU5tWm1ZaUlHOXRibTQ5SW1SQWMzbHRZbTlzYVc1bFFHRjRVblpwWVU1dVpOUThheXdRMFhBVnZaUWhxZERrY2pqZ1JNdjhLV0ZYbGlSbkNpbzNLU1YzZm5ReDJZc3l4cGhXQ1NDQWJIUVhsbUFCNGcydWF1VHJOejdIVjFGcXZLOVhGWWIiCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICAgIH0KICBdCn0=">
+    <meta name="keywords" content="버킷리스트, 목표관리, 생산성, 개인계획, 달성">
+    <meta name="author" content="룰루랄라 한기쌤">
+    
+    <!-- PWA 설정 -->
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4facfe">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="버킷리스트">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#4facfe">
+    <meta name="msapplication-config" content="browserconfig.xml">
+    
+    <!-- 파비콘 -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMCIgeTE9IjAiIHgyPSIxODAiIHkyPSIxODAiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBzdG9wLWNvbG9yPSIjNGZhY2ZlIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDBmMmZlIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjE4MCIgaGVpZ2h0PSIxODAiIGZpbGw9InVybCgjYSkiIHJ4PSIyMCIvPjx0ZXh0IHg9IjkwIiB5PSIxMjAiIGZvbnQtZmFtaWx5PSJBcHBsZSBDb2xvciBFbW9qaSwgU2Vnb2UgVUkgRW1vamksIE5vdG8gQ29sb3IgRW1vamksIEFuZHJvaWQgRW1vamkiIGZvbnQtc2l6ZT0iNzAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIj7wn46vPC90ZXh0Pjwvc3ZnPg==">
+    
+    <!-- 소셜 미디어 메타태그 -->
+    <meta property="og:title" content="🎯 Bucket Dreams - 나의 버킷리스트">
+    <meta property="og:description" content="인생에서 꼭 해보고 싶은 것들을 기록하고 달성해보세요">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://plusiam.github.io/bucket-dreams">
+    <meta property="og:image" content="https://plusiam.github.io/bucket-dreams/og-image.png">
+    <meta property="og:site_name" content="Bucket Dreams">
+    <meta property="og:locale" content="ko_KR">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="🎯 Bucket Dreams - 나의 버킷리스트">
+    <meta name="twitter:description" content="인생에서 꼭 해보고 싶은 것들을 기록하고 달성해보세요">
+    <meta name="twitter:image" content="https://plusiam.github.io/bucket-dreams/og-image.png">
+    
+    <!-- 보안 및 성능 -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
+    <!-- 폰트 및 외부 리소스 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- 외부 라이브러리 (지연 로딩) -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" as="script">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" as="script">
+    
+    <!-- 스타일시트 -->
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- 구조화된 데이터 -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Bucket Dreams",
+      "description": "개인 및 공용 기기에서 사용할 수 있는 버킷리스트 관리 앱",
+      "url": "https://plusiam.github.io/bucket-dreams",
+      "applicationCategory": "ProductivityApplication",
+      "operatingSystem": "Any",
+      "permissions": "browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "KRW"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "룰루랄라 한기쌤"
+      },
+      "inLanguage": "ko",
+      "isAccessibleForFree": true,
+      "browserRequirements": "Requires JavaScript. Requires HTML5."
+    }
+    </script>
 </head>
 
 <body>
@@ -54,7 +120,7 @@
                 <form class="add-form" aria-label="새 목표 추가 폼" role="form">
                     <div class="form-group">
                         <label for="goalInput">목표</label>
-                        <input type="text" id="goalInput" placeholder="예: 오로라 보기, 마라톤 완주하기" aria-describedby="goal-help" aria-required="true">
+                        <input type="text" id="goalInput" placeholder="예: 오로라 보기, 마라톤 완주하기" aria-describedby="goal-help" aria-required="true" maxlength="100" autocomplete="off">
                         <div id="goal-help" class="sr-only">달성하고 싶은 목표를 입력하세요. 엔터키로도 추가할 수 있습니다.</div>
                     </div>
                     <div class="form-group">
@@ -205,7 +271,7 @@
     </main>
 
     <!-- 자동 로그아웃 알림 -->
-    <div class="auto-logout-notice" id="autoLogoutNotice" role="alert" aria-live="assertive">
+    <div class="auto-logout-notice" id="autoLogoutNotice" role="alert" aria-live="assertive" aria-hidden="true">
         <span id="autoLogoutText">5분 후 자동 로그아웃됩니다</span>
         <button id="extendBtn" aria-label="세션 연장하기">연장</button>
     </div>
@@ -219,9 +285,9 @@
             </header>
             <form class="modal-form" role="form">
                 <label for="completionDate">달성 날짜</label>
-                <input type="date" id="completionDate" aria-required="true">
+                <input type="date" id="completionDate" aria-required="true" max="">
                 <label for="completionNote">달성 후기</label>
-                <textarea id="completionNote" placeholder="어떤 기분이었나요? 어떤 경험이었는지 간단히 적어보세요." aria-describedby="note-help"></textarea>
+                <textarea id="completionNote" placeholder="어떤 기분이었나요? 어떤 경험이었는지 간단히 적어보세요." aria-describedby="note-help" maxlength="500"></textarea>
                 <div id="note-help" class="sr-only">선택사항입니다. 달성 후 느낌이나 경험을 자유롭게 작성하세요.</div>
             </form>
             <div class="modal-buttons">
@@ -240,7 +306,7 @@
             </header>
             <form class="modal-form" role="form">
                 <label for="newUserNameInput">사용자 이름</label>
-                <input type="text" id="newUserNameInput" placeholder="예: 홍길동" aria-required="true" aria-describedby="name-help">
+                <input type="text" id="newUserNameInput" placeholder="예: 홍길동" aria-required="true" aria-describedby="name-help" maxlength="20" autocomplete="name">
                 <div id="name-help" class="sr-only">다른 사용자와 구분할 수 있는 이름을 입력하세요. 엔터키로도 생성할 수 있습니다.</div>
             </form>
             <div class="modal-buttons">
@@ -267,16 +333,43 @@
     </div>
 
     <!-- PWA 설치 버튼 -->
-    <button class="install-btn" id="installBtn" aria-label="앱을 기기에 설치하기">📱 앱 설치</button>
+    <button class="install-btn" id="installBtn" aria-label="앱을 기기에 설치하기" aria-hidden="true">📱 앱 설치</button>
 
     <!-- 개별 카드 다운로드용 숨겨진 영역 -->
     <div id="hiddenCardArea" style="position: absolute; left: -9999px; top: -9999px;" aria-hidden="true"></div>
     
     <!-- 스크린 리더용 숨겨진 텍스트 -->
-    <div class="sr-only">
+    <div class="sr-only" role="region" aria-label="접근성 안내">
         이 웹사이트는 스크린 리더와 키보드 네비게이션을 지원합니다. 
         탭 키로 요소 간 이동, 엔터 또는 스페이스 키로 버튼 실행, 
         방향키로 목록 네비게이션이 가능합니다.
+    </div>
+    
+    <!-- 로딩 인디케이터 -->
+    <div id="loadingIndicator" style="
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        border-radius: 10px;
+        display: none;
+        z-index: 9999;
+        backdrop-filter: blur(5px);
+    " aria-hidden="true">
+        <div style="text-align: center;">
+            <div style="
+                width: 40px;
+                height: 40px;
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #4facfe;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 10px;
+            "></div>
+            <div>로딩 중...</div>
+        </div>
     </div>
     
     <!-- 제작자 정보 -->
@@ -294,7 +387,8 @@
         border-radius: 20px;
         backdrop-filter: blur(10px);
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    ">
+        transition: opacity 0.3s ease;
+    " role="contentinfo">
         <span>Made with ❤️ by 룰루랄라 한기쌤</span>
         <a href="https://www.facebook.com/playrurulala" target="_blank" rel="noopener noreferrer" style="
             color: #1877f2;
@@ -307,6 +401,60 @@
         </a>
     </footer>
 
+    <!-- 외부 라이브러리 (지연 로딩) -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- 메인 스크립트 -->
     <script src="script.js"></script>
+    
+    <!-- CSS 애니메이션 (로딩 스피너) -->
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 페이드 인 애니메이션 */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 모달 애니메이션 */
+        .modal {
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        
+        @keyframes modalFadeIn {
+            from { 
+                opacity: 0; 
+                backdrop-filter: blur(0px);
+            }
+            to { 
+                opacity: 1; 
+                backdrop-filter: blur(5px);
+            }
+        }
+        
+        .modal-content {
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes modalSlideIn {
+            from { 
+                transform: translate(-50%, -60%);
+                opacity: 0;
+            }
+            to { 
+                transform: translate(-50%, -50%);
+                opacity: 1;
+            }
+        }
+    </style>
 </body>
 </html>
