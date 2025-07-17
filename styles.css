@@ -2601,3 +2601,725 @@ body {
         font-size: 1rem;
     }
 }
+
+/* 개선된 타임라인 스타일 */
+.timeline-dot {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50%;
+    margin-right: 15px;
+    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: white;
+}
+
+.timeline-number {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.timeline-content {
+    flex: 1;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 8px;
+}
+
+.timeline-header h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    flex: 1;
+    margin: 0;
+}
+
+.timeline-emotion {
+    font-size: 1.5rem;
+    margin-left: 10px;
+}
+
+.timeline-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.timeline-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.timeline-note {
+    font-size: 0.9rem;
+    color: #546e7a;
+    margin: 10px 0;
+    padding: 10px;
+    background: #f5f7fa;
+    border-radius: 8px;
+    border-left: 3px solid #4facfe;
+}
+
+.timeline-meaning {
+    font-style: italic;
+    color: #666;
+    margin: 10px 0;
+    padding: 8px 12px;
+    background: #fffbf0;
+    border-radius: 6px;
+    border-left: 3px solid #ffa502;
+}
+
+.emotional-summary {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.85rem;
+}
+
+.emotion-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    background: #e3f2fd;
+    border-radius: 20px;
+    color: #1976d2;
+    font-weight: 500;
+}
+
+.emotion-journey {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    background: #f3e5f5;
+    border-radius: 20px;
+    color: #7b1fa2;
+    font-weight: 500;
+}
+
+.emotion-count {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.timeline-stats {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.timeline-stat h5 {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.timeline-stat p {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.category-distribution {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.category-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.empty-timeline .subtitle {
+    font-size: 0.9rem;
+    color: #999;
+}
+
+/* Timeline icons */
+.icon-calendar::before {
+    content: '📅';
+    margin-right: 3px;
+}
+
+.icon-clock::before {
+    content: '⏰';
+    margin-right: 3px;
+}
+
+/* Timeline responsive */
+@media (max-width: 768px) {
+    .timeline-dot {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 0.8rem;
+    }
+    
+    .timeline-header h4 {
+        font-size: 1rem;
+    }
+    
+    .timeline-emotion {
+        font-size: 1.2rem;
+    }
+    
+    .timeline-meta {
+        font-size: 0.8rem;
+        gap: 10px;
+    }
+    
+    .timeline-stats {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        padding: 15px;
+    }
+}
+
+/* 달성 예측 카드 스타일 */
+.prediction-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.prediction-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.prediction-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.prediction-card.high {
+    border-top: 4px solid #4caf50;
+}
+
+.prediction-card.medium {
+    border-top: 4px solid #ff9800;
+}
+
+.prediction-card.low {
+    border-top: 4px solid #f44336;
+}
+
+.prediction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 15px;
+}
+
+.prediction-header h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    flex: 1;
+}
+
+.category-badge {
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-left: 10px;
+}
+
+.category-badge.travel { background: #e3f2fd; }
+.category-badge.hobby { background: #e8f5e9; }
+.category-badge.career { background: #fce4ec; }
+.category-badge.relationship { background: #fff3e0; }
+.category-badge.health { background: #e0f7fa; }
+.category-badge.other { background: #fff9c4; }
+
+.prediction-probability {
+    margin: 15px 0;
+}
+
+.probability-gauge {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.probability-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #8bc34a);
+    transition: width 0.3s ease;
+}
+
+.prediction-card.medium .probability-fill {
+    background: linear-gradient(90deg, #ff9800, #ffb74d);
+}
+
+.prediction-card.low .probability-fill {
+    background: linear-gradient(90deg, #f44336, #e57373);
+}
+
+.probability-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.probability-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.probability-label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.prediction-timeline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #f5f7fa;
+    border-radius: 8px;
+    margin: 15px 0;
+    font-size: 0.9rem;
+    color: #546e7a;
+}
+
+.prediction-next-step {
+    margin: 15px 0;
+    padding: 15px;
+    background: #e8f5e9;
+    border-radius: 8px;
+    border-left: 3px solid #4caf50;
+}
+
+.prediction-next-step h5 {
+    margin: 0 0 8px 0;
+    font-size: 0.95rem;
+    color: #2e7d32;
+}
+
+.prediction-next-step p {
+    margin: 0 0 5px 0;
+    color: #333;
+}
+
+.step-duration {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.prediction-tips {
+    margin: 15px 0;
+}
+
+.prediction-tips h5 {
+    margin: 0 0 8px 0;
+    font-size: 0.95rem;
+    color: #1976d2;
+}
+
+.prediction-tips ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.prediction-tips li {
+    font-size: 0.9rem;
+    color: #546e7a;
+    margin-bottom: 5px;
+}
+
+.prediction-risks {
+    margin: 15px 0;
+    padding: 12px;
+    background: #fff3e0;
+    border-radius: 8px;
+    border-left: 3px solid #ff9800;
+}
+
+.prediction-risks h5 {
+    margin: 0 0 5px 0;
+    font-size: 0.95rem;
+    color: #e65100;
+}
+
+.prediction-risks p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.prediction-emotion {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.emotion-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    background: #f5f5f5;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.overall-motivation {
+    margin-top: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.overall-motivation h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+}
+
+.overall-motivation p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.empty-predictions {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.empty-predictions .subtitle {
+    font-size: 0.9rem;
+    color: #999;
+    margin-top: 10px;
+}
+
+/* 반응형 디자인 - 예측 카드 */
+@media (max-width: 768px) {
+    .prediction-cards {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .prediction-card {
+        padding: 15px;
+    }
+    
+    .probability-value {
+        font-size: 1.5rem;
+    }
+    
+    .prediction-header h4 {
+        font-size: 1rem;
+    }
+}
+
+/* 감정 체크인 버튼 */
+.btn-emotion {
+    background: #FFE0B2;
+    border: none;
+    font-size: 1.2rem;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-emotion:hover {
+    background: #FFCC80;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+/* 확률 원형 표시 (대체 스타일) */
+.probability-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    margin: 10px auto;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.prediction-card.high .probability-circle {
+    background: linear-gradient(135deg, #4CAF50, #66BB6A);
+}
+
+.prediction-card.medium .probability-circle {
+    background: linear-gradient(135deg, #FFC107, #FFD54F);
+}
+
+.prediction-card.low .probability-circle {
+    background: linear-gradient(135deg, #FF5722, #FF7043);
+}
+
+/* 공유 목표 카드 */
+.shared-goal-card {
+    background: #F3F4F6;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #E5E7EB;
+    transition: all 0.3s ease;
+}
+
+.shared-goal-card:hover {
+    background: #EFEFEF;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.shared-goal-card h4 {
+    margin: 0 0 10px 0;
+    color: #374151;
+    font-size: 1rem;
+}
+
+.shared-goal-card .goal-owner {
+    font-size: 0.85rem;
+    color: #6B7280;
+    margin-bottom: 8px;
+}
+
+.shared-goal-card .goal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.shared-goal-card .btn-encourage,
+.shared-goal-card .btn-adopt {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shared-goal-card .btn-encourage {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+.shared-goal-card .btn-encourage:hover {
+    background: #FCA5A5;
+}
+
+.shared-goal-card .btn-adopt {
+    background: #DBEAFE;
+    color: #2563EB;
+}
+
+.shared-goal-card .btn-adopt:hover {
+    background: #93C5FD;
+}
+
+/* 챌린지 카드 */
+.challenge-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 15px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.challenge-card:hover {
+    border-color: #4facfe;
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.2);
+}
+
+.challenge-card h4 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.challenge-card .challenge-description {
+    color: #546e7a;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+.challenge-card .challenge-participants {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.challenge-card .participant {
+    padding: 4px 10px;
+    background: #E3F2FD;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #1976D2;
+}
+
+.challenge-card .challenge-progress {
+    background: #f0f0f0;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.challenge-card .challenge-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    transition: width 0.3s ease;
+}
+
+/* 차트 컨테이너 최적화 */
+.insight-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.insight-card h3 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.insight-card canvas {
+    max-height: 300px !important;
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* 인사이트 그리드 */
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+/* 가족 구성원 카드 */
+.family-member-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+}
+
+.family-member-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.family-member-info {
+    flex: 1;
+}
+
+.family-member-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.family-member-status {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.family-member-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* 응원 메시지 벽 */
+.encouragement-wall {
+    background: #F9FAFB;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.encouragement-message {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border-left: 3px solid #4facfe;
+}
+
+.encouragement-author {
+    font-weight: 600;
+    color: #4facfe;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.encouragement-text {
+    color: #546e7a;
+    font-size: 0.95rem;
+}
+
+.encouragement-time {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 5px;
+}
