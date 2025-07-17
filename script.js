@@ -549,6 +549,14 @@
         let autoLogoutWarningTimer = null;
         let isGuestMode = false;
         let isEditMode = false;
+        
+        // Chart.js 인스턴스 관리
+        const chartInstances = {
+            achievement: null,
+            emotion: null,
+            timePattern: null,
+            categoryDistribution: null
+        };
 
         // 성능 최적화를 위한 캐시 변수들
         let renderedBucketListHTML = '';
@@ -3993,9 +4001,24 @@
             }
         }
 
+        // 모든 차트 인스턴스 제거
+        function destroyAllCharts() {
+            Object.keys(chartInstances).forEach(key => {
+                if (chartInstances[key]) {
+                    chartInstances[key].destroy();
+                    chartInstances[key] = null;
+                }
+            });
+        }
+        
         // 탭 전환 (성능 최적화)
         function switchTab(tabName) {
             performance.mark('switchTab-start');
+            
+            // 탭 전환 시 차트 인스턴스 정리
+            if (tabName !== 'insights') {
+                destroyAllCharts();
+            }
             
             // 탭 버튼 상태 업데이트
             document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -4979,14 +5002,172 @@
             return categories[category] || '✨ 기타';
         }
 
-        // 날짜 포맷팅
+        // 날짜 포맷팅 (개선된 버전)
         function formatDate(dateString) {
             const date = new Date(dateString);
+            const now = new Date();
+            const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return '오늘';
+            if (diffDays === 1) return '어제';
+            if (diffDays < 7) return `${diffDays}일 전`;
+            if (diffDays < 30) return `${Math.floor(diffDays / 7)}주 전`;
+            
             return date.toLocaleDateString('ko-KR', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
+        }
+
+        // 감정 여정 렌더링 (emotionalJourney 데이터 활용)
+        function renderEmotionalJourney(goal) {
+            if (!goal.emotionalJourney || goal.emotionalJourney.length === 0) {
+                return '';
+            }
+            
+            // 감정 변화 요약
+            const emotions = goal.emotionalJourney.map(entry => entry.emotion);
+            const uniqueEmotions = [...new Set(emotions)];
+            
+            if (uniqueEmotions.length === 1) {
+                return `<div class="emotional-summary">
+                    <span class="emotion-badge">${getEmotionEmoji(uniqueEmotions[0])} 
+                    일관된 ${getEmotionName(uniqueEmotions[0])}</span>
+                </div>`;
+            }
+            
+            // 감정 변화가 있었던 경우
+            const firstEmotion = goal.emotionalJourney[0].emotion;
+            const lastEmotion = goal.emotionalJourney[goal.emotionalJourney.length - 1].emotion;
+            
+            return `<div class="emotional-summary">
+                <span class="emotion-journey">
+                    ${getEmotionEmoji(firstEmotion)} → ${getEmotionEmoji(lastEmotion)}
+                </span>
+                <span class="emotion-count">${goal.emotionalJourney.length}번의 감정 기록</span>
+            </div>`;
+        }
+
+        // 목표 달성 기간 계산
+        function calculateGoalDuration(goal) {
+            if (!goal.createdAt || !goal.completedAt) return null;
+            
+            const start = new Date(goal.createdAt);
+            const end = new Date(goal.completedAt);
+            const days = Math.floor((end - start) / (1000 * 60 * 60 * 24));
+            
+            if (days === 0) return '당일 달성';
+            if (days < 7) return `${days}일 만에 달성`;
+            if (days < 30) return `${Math.floor(days / 7)}주 만에 달성`;
+            if (days < 365) return `${Math.floor(days / 30)}개월 만에 달성`;
+            return `${Math.floor(days / 365)}년 ${Math.floor((days % 365) / 30)}개월 만에 달성`;
+        }
+
+        // 타임라인 통계 렌더링
+        function renderTimelineStats(completedGoals) {
+            const statsContainer = document.createElement('div');
+            statsContainer.className = 'timeline-stats';
+            
+            // 카테고리별 달성 수
+            const categoryStats = {};
+            completedGoals.forEach(goal => {
+                categoryStats[goal.category] = (categoryStats[goal.category] || 0) + 1;
+            });
+            
+            // 평균 달성 시간
+            const durations = completedGoals
+                .filter(goal => goal.createdAt && goal.completedAt)
+                .map(goal => new Date(goal.completedAt) - new Date(goal.createdAt));
+            
+            const avgDuration = durations.length > 0 ? 
+                durations.reduce((a, b) => a + b, 0) / durations.length : 0;
+            
+            statsContainer.innerHTML = `
+                <div class="timeline-stat">
+                    <h5>달성 분포</h5>
+                    <div class="category-distribution">
+                        ${Object.entries(categoryStats).map(([category, count]) => `
+                            <span class="category-stat">
+                                ${getCategoryEmoji(category)} ${count}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+                ${avgDuration > 0 ? `
+                    <div class="timeline-stat">
+                        <h5>평균 달성 기간</h5>
+                        <p>${formatDuration(avgDuration)}</p>
+                    </div>
+                ` : ''}
+            `;
+            
+            const timelineContainer = document.getElementById('achievementTimeline');
+            if (timelineContainer && timelineContainer.parentNode) {
+                timelineContainer.parentNode.insertBefore(statsContainer, timelineContainer.nextSibling);
+            }
+        }
+
+        // 기간 포맷 헬퍼
+        function formatDuration(milliseconds) {
+            const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
+            if (days < 7) return `${days}일`;
+            if (days < 30) return `${Math.floor(days / 7)}주`;
+            if (days < 365) return `${Math.floor(days / 30)}개월`;
+            return `${Math.floor(days / 365)}년`;
+        }
+
+        // 감정 이모지 맵핑
+        function getEmotionEmoji(emotion) {
+            const emotionMap = {
+                'proud': '😎',
+                'happy': '😊',
+                'excited': '🤩',
+                'grateful': '🙏',
+                'satisfied': '😌',
+                'relieved': '😮‍💨',
+                'determined': '💪',
+                'motivated': '🔥',
+                'anxious': '😰',
+                'overwhelmed': '😵',
+                'hopeful': '🌟',
+                'neutral': '😐',
+                'curious': '🤔'
+            };
+            return emotionMap[emotion] || '😊';
+        }
+
+        // 감정 이름 맵핑
+        function getEmotionName(emotion) {
+            const emotionNames = {
+                'proud': '뿌듯함',
+                'happy': '행복',
+                'excited': '신남',
+                'grateful': '감사',
+                'satisfied': '만족',
+                'relieved': '안도',
+                'determined': '결단력',
+                'motivated': '동기부여',
+                'anxious': '불안',
+                'overwhelmed': '압도됨',
+                'hopeful': '희망',
+                'neutral': '평온',
+                'curious': '호기심'
+            };
+            return emotionNames[emotion] || emotion;
+        }
+
+        // 카테고리 이모지 맵핑
+        function getCategoryEmoji(category) {
+            const categoryEmojis = {
+                'travel': '🌍',
+                'hobby': '🎨',
+                'career': '💼',
+                'relationship': '👥',
+                'health': '💪',
+                'other': '✨'
+            };
+            return categoryEmojis[category] || '🎯';
         }
 
         // 개선된 카드 로딩 상태 표시
@@ -5843,7 +6024,7 @@
             if (journeyMilestonesEl) journeyMilestonesEl.textContent = milestones;
         }
         
-        // 달성 타임라인 렌더링 (개선된 간결한 버전)
+        // 달성 타임라인 렌더링 (개선된 버전)
         function renderAchievementTimeline() {
             const container = document.getElementById('achievementTimeline');
             if (!container || !currentProfile) return;
@@ -5854,20 +6035,61 @@
                 .slice(0, 10);
             
             if (completed.length === 0) {
-                container.innerHTML = '<p class="empty-timeline">아직 완료된 목표가 없습니다. 첫 번째 목표를 달성해보세요!</p>';
+                container.innerHTML = `
+                    <div class="empty-timeline">
+                        <p>아직 완료된 목표가 없습니다.</p>
+                        <p class="subtitle">첫 번째 목표를 달성해보세요! 🎯</p>
+                    </div>
+                `;
                 return;
             }
             
-            container.innerHTML = completed.map(goal => `
-                <div class="timeline-item">
-                    <div class="timeline-dot ${goal.category}"></div>
-                    <div class="timeline-content">
-                        <h4>${goal.title}</h4>
-                        <p class="timeline-date">${new Date(goal.completedAt).toLocaleDateString('ko-KR')}</p>
-                        <span class="timeline-category">${getCategoryDisplayName(goal.category)}</span>
+            // 타임라인 아이템 생성 - 감정 정보 추가
+            container.innerHTML = completed.map((goal, index) => {
+                // 완료 시점의 감정 찾기
+                const completionEmotion = goal.completionEmotion || 'proud';
+                const emotionEmoji = getEmotionEmoji(completionEmotion);
+                
+                // 달성까지 걸린 시간 계산
+                const duration = calculateGoalDuration(goal);
+                
+                // 의미있는 점 표시
+                const meaningfulText = goal.meaningfulAspect ? 
+                    `<p class="timeline-meaning">"${escapeHtml(goal.meaningfulAspect)}"</p>` : '';
+                
+                return `
+                    <div class="timeline-item fade-in" style="animation-delay: ${index * 0.1}s">
+                        <div class="timeline-dot ${goal.category}">
+                            <span class="timeline-number">${completed.length - index}</span>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-header">
+                                <h4>${escapeHtml(goal.text)}</h4>
+                                <span class="timeline-emotion">${emotionEmoji}</span>
+                            </div>
+                            <div class="timeline-meta">
+                                <span class="timeline-date">
+                                    <i class="icon-calendar"></i>
+                                    ${formatDate(goal.completedAt)}
+                                </span>
+                                <span class="timeline-category">
+                                    ${getCategoryEmoji(goal.category)} ${getCategoryDisplayName(goal.category)}
+                                </span>
+                                ${duration ? `<span class="timeline-duration">
+                                    <i class="icon-clock"></i> ${duration}
+                                </span>` : ''}
+                            </div>
+                            ${goal.completionNote ? 
+                                `<p class="timeline-note">${escapeHtml(goal.completionNote)}</p>` : ''}
+                            ${meaningfulText}
+                            ${renderEmotionalJourney(goal)}
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
+            
+            // 타임라인 통계 추가
+            renderTimelineStats(completed);
         }
         
         // 카테고리별 진행 현황 업데이트
@@ -5938,25 +6160,58 @@
             if (!chartContainer || !currentProfile) return;
             
             try {
+                // 기존 차트 인스턴스 제거
+                if (chartInstances.achievement) {
+                    chartInstances.achievement.destroy();
+                    chartInstances.achievement = null;
+                }
+                
                 const goals = currentProfile.bucketList;
                 const completed = goals.filter(g => g.completed).length;
                 const inProgress = goals.length - completed;
                 
+                if (goals.length === 0) {
+                    chartContainer.innerHTML = '<p style="text-align: center; color: #666;">아직 목표가 없습니다.</p>';
+                    return;
+                }
+                
                 if (window.Chart) {
                     const ctx = chartContainer.getContext('2d');
-                    new Chart(ctx, {
+                    chartInstances.achievement = new Chart(ctx, {
                         type: 'doughnut',
                         data: {
                             labels: ['완료', '진행중'],
                             datasets: [{
                                 data: [completed, inProgress],
-                                backgroundColor: ['#4CAF50', '#FFC107']
+                                backgroundColor: ['#4CAF50', '#FFC107'],
+                                borderWidth: 2,
+                                borderColor: '#fff'
                             }]
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: true,
                             plugins: {
-                                legend: { position: 'bottom' }
+                                legend: { 
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 15,
+                                        font: {
+                                            size: 14
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.parsed || 0;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = Math.round((value / total) * 100);
+                                            return `${label}: ${value}개 (${percentage}%)`;
+                                        }
+                                    }
+                                }
                             }
                         }
                     });
@@ -5973,36 +6228,113 @@
             if (!chartContainer || !currentProfile) return;
             
             try {
+                // 기존 차트 인스턴스 제거
+                if (chartInstances.emotion) {
+                    chartInstances.emotion.destroy();
+                    chartInstances.emotion = null;
+                }
+                
                 const emotionData = {};
+                const emotionLabels = {
+                    'proud': '😎 뿌듯함',
+                    'happy': '😊 행복',
+                    'excited': '🤩 신남',
+                    'grateful': '🙏 감사',
+                    'satisfied': '😌 만족',
+                    'relieved': '😮‍💨 안도',
+                    'determined': '💪 결단력',
+                    'motivated': '🔥 동기부여',
+                    'anxious': '😰 불안',
+                    'overwhelmed': '😵 압도됨',
+                    'hopeful': '🌟 희망',
+                    'curious': '🤔 호기심'
+                };
+                
+                // emotionalJourney 데이터 수집 (올바른 데이터 구조 사용)
                 currentProfile.bucketList.forEach(goal => {
-                    if (goal.emotions && goal.emotions.length > 0) {
-                        goal.emotions.forEach(emotion => {
-                            emotionData[emotion.emotion] = (emotionData[emotion.emotion] || 0) + 1;
+                    // 감정 여정에서 수집
+                    if (goal.emotionalJourney && goal.emotionalJourney.length > 0) {
+                        goal.emotionalJourney.forEach(entry => {
+                            const emotion = entry.emotion;
+                            emotionData[emotion] = (emotionData[emotion] || 0) + 1;
                         });
+                    }
+                    // 완료 시점 감정도 포함
+                    if (goal.completionEmotion) {
+                        emotionData[goal.completionEmotion] = (emotionData[goal.completionEmotion] || 0) + 1;
                     }
                 });
                 
                 if (window.Chart && Object.keys(emotionData).length > 0) {
                     const ctx = chartContainer.getContext('2d');
-                    new Chart(ctx, {
+                    
+                    // 데이터 정렬 (많은 순서대로)
+                    const sortedEmotions = Object.entries(emotionData)
+                        .sort(([,a], [,b]) => b - a)
+                        .slice(0, 8); // 상위 8개만 표시
+                    
+                    const labels = sortedEmotions.map(([emotion]) => emotionLabels[emotion] || emotion);
+                    const data = sortedEmotions.map(([,count]) => count);
+                    
+                    // 감정별 색상 맵핑
+                    const emotionColors = {
+                        'proud': '#9c27b0',
+                        'happy': '#2196f3',
+                        'excited': '#ff9800',
+                        'grateful': '#4caf50',
+                        'satisfied': '#00bcd4',
+                        'relieved': '#cddc39',
+                        'determined': '#f44336',
+                        'motivated': '#ff5722',
+                        'anxious': '#607d8b',
+                        'overwhelmed': '#795548',
+                        'hopeful': '#ffc107',
+                        'curious': '#3f51b5'
+                    };
+                    
+                    const backgroundColor = sortedEmotions.map(([emotion]) => 
+                        emotionColors[emotion] || '#9e9e9e'
+                    );
+                    
+                    chartInstances.emotion = new Chart(ctx, {
                         type: 'bar',
                         data: {
-                            labels: Object.keys(emotionData),
+                            labels: labels,
                             datasets: [{
                                 label: '감정 빈도',
-                                data: Object.values(emotionData),
-                                backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7']
+                                data: data,
+                                backgroundColor: backgroundColor,
+                                borderColor: backgroundColor.map(color => color + '88'),
+                                borderWidth: 2
                             }]
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: true,
                             scales: {
-                                y: { beginAtZero: true }
+                                y: { 
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `${context.parsed.y}번 기록됨`;
+                                        }
+                                    }
+                                }
                             }
                         }
                     });
                 } else {
-                    chartContainer.innerHTML = '<p>감정 데이터가 없습니다.</p>';
+                    chartContainer.innerHTML = '<p style="text-align: center; color: #666;">아직 감정 데이터가 없습니다.</p>';
                 }
             } catch (error) {
                 console.error('감정 차트 오류:', error);
@@ -6016,7 +6348,19 @@
             if (!chartContainer || !currentProfile) return;
             
             try {
-                const completed = currentProfile.bucketList.filter(g => g.completed);
+                // 기존 차트 인스턴스 제거
+                if (chartInstances.timePattern) {
+                    chartInstances.timePattern.destroy();
+                    chartInstances.timePattern = null;
+                }
+                
+                const completed = currentProfile.bucketList.filter(g => g.completed && g.completedAt);
+                
+                if (completed.length === 0) {
+                    chartContainer.innerHTML = '<p style="text-align: center; color: #666;">아직 완료된 목표가 없습니다.</p>';
+                    return;
+                }
+                
                 const monthlyData = {};
                 
                 completed.forEach(goal => {
@@ -6026,26 +6370,60 @@
                 
                 if (window.Chart && Object.keys(monthlyData).length > 0) {
                     const ctx = chartContainer.getContext('2d');
-                    new Chart(ctx, {
+                    
+                    // 날짜 정렬
+                    const sortedMonths = Object.keys(monthlyData).sort();
+                    const labels = sortedMonths.map(month => {
+                        const [year, monthNum] = month.split('-');
+                        return `${year}년 ${parseInt(monthNum)}월`;
+                    });
+                    const data = sortedMonths.map(month => monthlyData[month]);
+                    
+                    chartInstances.timePattern = new Chart(ctx, {
                         type: 'line',
                         data: {
-                            labels: Object.keys(monthlyData).sort(),
+                            labels: labels,
                             datasets: [{
                                 label: '월별 달성 수',
-                                data: Object.keys(monthlyData).sort().map(month => monthlyData[month]),
+                                data: data,
                                 borderColor: '#36A2EB',
-                                tension: 0.1
+                                backgroundColor: '#36A2EB20',
+                                tension: 0.1,
+                                fill: true,
+                                pointBackgroundColor: '#36A2EB',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 5,
+                                pointHoverRadius: 7
                             }]
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: true,
                             scales: {
-                                y: { beginAtZero: true }
+                                y: { 
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `${context.parsed.y}개 달성`;
+                                        }
+                                    }
+                                }
                             }
                         }
                     });
                 } else {
-                    chartContainer.innerHTML = '<p>시간 패턴 데이터가 없습니다.</p>';
+                    chartContainer.innerHTML = '<p style="text-align: center; color: #666;">시간 패턴 데이터가 없습니다.</p>';
                 }
             } catch (error) {
                 console.error('시간 패턴 차트 오류:', error);
@@ -6059,32 +6437,80 @@
             if (!chartContainer || !currentProfile) return;
             
             try {
+                // 기존 차트 인스턴스 제거
+                if (chartInstances.categoryDistribution) {
+                    chartInstances.categoryDistribution.destroy();
+                    chartInstances.categoryDistribution = null;
+                }
+                
                 const categoryData = {};
                 currentProfile.bucketList.forEach(goal => {
-                    const category = getCategoryDisplayName(goal.category);
+                    const category = goal.category;
                     categoryData[category] = (categoryData[category] || 0) + 1;
                 });
                 
+                if (currentProfile.bucketList.length === 0) {
+                    chartContainer.innerHTML = '<p style="text-align: center; color: #666;">아직 목표가 없습니다.</p>';
+                    return;
+                }
+                
                 if (window.Chart && Object.keys(categoryData).length > 0) {
                     const ctx = chartContainer.getContext('2d');
-                    new Chart(ctx, {
+                    
+                    // 카테고리별 색상
+                    const categoryColors = {
+                        'travel': '#4facfe',
+                        'hobby': '#43e97b',
+                        'career': '#fa709a',
+                        'relationship': '#f093fb',
+                        'health': '#4fffe7',
+                        'other': '#ffd200'
+                    };
+                    
+                    const labels = Object.keys(categoryData).map(cat => getCategoryDisplayName(cat));
+                    const data = Object.values(categoryData);
+                    const backgroundColor = Object.keys(categoryData).map(cat => categoryColors[cat] || '#999');
+                    
+                    chartInstances.categoryDistribution = new Chart(ctx, {
                         type: 'pie',
                         data: {
-                            labels: Object.keys(categoryData),
+                            labels: labels,
                             datasets: [{
-                                data: Object.values(categoryData),
-                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
+                                data: data,
+                                backgroundColor: backgroundColor,
+                                borderColor: '#fff',
+                                borderWidth: 2
                             }]
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: true,
                             plugins: {
-                                legend: { position: 'bottom' }
+                                legend: { 
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 15,
+                                        font: {
+                                            size: 13
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.parsed || 0;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = Math.round((value / total) * 100);
+                                            return `${label}: ${value}개 (${percentage}%)`;
+                                        }
+                                    }
+                                }
                             }
                         }
                     });
                 } else {
-                    chartContainer.innerHTML = '<p>카테고리 데이터가 없습니다.</p>';
+                    chartContainer.innerHTML = '<p style="text-align: center; color: #666;">카테고리 데이터가 없습니다.</p>';
                 }
             } catch (error) {
                 console.error('카테고리 분포 차트 오류:', error);
@@ -6158,18 +6584,51 @@
             
             try {
                 const activeGoals = currentProfile.bucketList.filter(g => !g.completed);
+                
+                if (activeGoals.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-predictions">
+                            <p>예측할 수 있는 진행중인 목표가 없습니다.</p>
+                            <p class="subtitle">새로운 목표를 추가해보세요!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
                 const predictions = [];
                 
-                activeGoals.slice(0, 3).forEach(goal => {
+                // 우선순위가 높은 목표 또는 최근 추가된 목표 3개 선택
+                const priorityGoals = activeGoals
+                    .sort((a, b) => {
+                        // 타겟 날짜가 있는 목표 우선
+                        if (a.targetDate && !b.targetDate) return -1;
+                        if (!a.targetDate && b.targetDate) return 1;
+                        // 최근 추가된 목표 우선
+                        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+                    })
+                    .slice(0, 3);
+                
+                priorityGoals.forEach(goal => {
                     try {
-                        const probability = SmartPlanner.predictSuccessProbability(goal, currentProfile);
+                        // userHistory를 bucketList로 전달
+                        const probability = SmartPlanner.predictSuccessProbability(goal, currentProfile.bucketList);
                         const actionPlan = SmartPlanner.generateActionPlan(goal);
+                        const scenario = SmartPlanner.generateSuccessScenarios(goal, probability);
                         
                         predictions.push({
-                            goal: goal.title,
+                            goal: goal.text, // title이 아닌 text 사용
+                            goalId: goal.id,
+                            category: goal.category,
                             probability: Math.round(probability * 100),
-                            nextStep: actionPlan.steps[0] || '계획을 세워보세요',
-                            timeframe: actionPlan.timeframe || '미정'
+                            probabilityLevel: scenario.level,
+                            nextStep: actionPlan[0] ? actionPlan[0].step : '목표를 구체화해보세요',
+                            stepDuration: actionPlan[0] ? actionPlan[0].duration : '1주',
+                            timeline: scenario.timeline,
+                            tips: scenario.tips,
+                            risks: scenario.risks,
+                            emotionalState: goal.emotionalJourney && goal.emotionalJourney.length > 0 
+                                ? goal.emotionalJourney[goal.emotionalJourney.length - 1].emotion 
+                                : 'neutral'
                         });
                     } catch (error) {
                         console.error('예측 생성 오류:', error);
@@ -6177,25 +6636,83 @@
                 });
                 
                 if (predictions.length === 0) {
-                    container.innerHTML = '<p>예측할 수 있는 진행중인 목표가 없습니다.</p>';
+                    container.innerHTML = '<p style="text-align: center; color: #666;">예측을 생성할 수 없습니다.</p>';
                     return;
                 }
                 
-                container.innerHTML = predictions.map(pred => `
-                    <div class="prediction-card">
-                        <h4>${pred.goal}</h4>
-                        <div class="prediction-probability">
-                            <span class="probability-value">${pred.probability}%</span>
-                            <span class="probability-label">성공 확률</span>
+                container.innerHTML = predictions.map(pred => {
+                    const probabilityClass = pred.probabilityLevel === 'high' ? 'high' : 
+                                           pred.probabilityLevel === 'medium' ? 'medium' : 'low';
+                    
+                    return `
+                        <div class="prediction-card ${probabilityClass}">
+                            <div class="prediction-header">
+                                <h4>${escapeHtml(pred.goal)}</h4>
+                                <span class="category-badge ${pred.category}">
+                                    ${getCategoryEmoji(pred.category)}
+                                </span>
+                            </div>
+                            
+                            <div class="prediction-probability">
+                                <div class="probability-gauge">
+                                    <div class="probability-fill" style="width: ${pred.probability}%"></div>
+                                </div>
+                                <div class="probability-info">
+                                    <span class="probability-value">${pred.probability}%</span>
+                                    <span class="probability-label">성공 가능성</span>
+                                </div>
+                            </div>
+                            
+                            <div class="prediction-timeline">
+                                <i class="icon-clock"></i>
+                                <span>${pred.timeline}</span>
+                            </div>
+                            
+                            <div class="prediction-next-step">
+                                <h5>📌 다음 단계</h5>
+                                <p>${escapeHtml(pred.nextStep)}</p>
+                                <span class="step-duration">예상 소요: ${pred.stepDuration}</span>
+                            </div>
+                            
+                            <div class="prediction-tips">
+                                <h5>💡 조언</h5>
+                                <ul>
+                                    ${pred.tips.slice(0, 2).map(tip => 
+                                        `<li>${escapeHtml(tip)}</li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                            
+                            ${pred.risks.length > 0 ? `
+                                <div class="prediction-risks">
+                                    <h5>⚠️ 주의사항</h5>
+                                    <p>${escapeHtml(pred.risks[0])}</p>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="prediction-emotion">
+                                <span class="emotion-indicator">
+                                    ${getEmotionEmoji(pred.emotionalState)}
+                                    현재 감정: ${getEmotionName(pred.emotionalState)}
+                                </span>
+                            </div>
                         </div>
-                        <div class="prediction-next-step">
-                            <strong>다음 단계:</strong> ${pred.nextStep}
-                        </div>
-                        <div class="prediction-timeframe">
-                            <strong>예상 기간:</strong> ${pred.timeframe}
-                        </div>
+                    `;
+                }).join('');
+                
+                // 전체 동기 지수 표시
+                const motivationIndex = EmotionalJourney.calculateMotivationIndex();
+                const motivationMessage = motivationIndex >= 7 ? '높은 동기 상태입니다! 🔥' :
+                                        motivationIndex >= 4 ? '적절한 동기 수준입니다 👍' :
+                                        '동기 부여가 필요해 보입니다 💪';
+                
+                container.innerHTML += `
+                    <div class="overall-motivation">
+                        <h4>전체 동기 지수: ${motivationIndex}/10</h4>
+                        <p>${motivationMessage}</p>
                     </div>
-                `).join('');
+                `;
+                
             } catch (error) {
                 console.error('예측 카드 오류:', error);
                 container.innerHTML = '<p>예측을 생성할 수 없습니다.</p>';
