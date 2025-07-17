@@ -7393,14 +7393,196 @@
             });
         }
 
-        // 전체 리스트 PDF 다운로드 (간소화된 버전)
-        function downloadAsImage() {
+        // 전체 리스트 PDF 다운로드
+        async function downloadAsImage() {
             if (!currentProfile || currentProfile.bucketList.length === 0) {
                 alert('다운로드할 목표가 없습니다.');
                 return;
             }
             
-            alert('PDF 다운로드 기능은 개발 중입니다.');
+            // 로딩 표시
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255, 255, 255, 0.95);
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                z-index: 10000;
+                text-align: center;
+            `;
+            loadingDiv.innerHTML = `
+                <div style="font-size: 50px; margin-bottom: 10px;">📄</div>
+                <div style="font-size: 18px; font-weight: 600; color: #333;">PDF 생성 중...</div>
+                <div style="font-size: 14px; color: #666; margin-top: 5px;">잠시만 기다려 주세요</div>
+            `;
+            document.body.appendChild(loadingDiv);
+            
+            try {
+                // PDF용 임시 컨테이너 생성
+                const pdfContainer = document.createElement('div');
+                pdfContainer.style.cssText = `
+                    position: absolute;
+                    left: -9999px;
+                    top: -9999px;
+                    width: 794px;
+                    background: white;
+                    padding: 40px;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                `;
+                
+                // 헤더 추가
+                pdfContainer.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 40px;">
+                        <h1 style="font-size: 32px; color: #333; margin: 0;">🎯 ${escapeHtml(currentProfile.name)}의 버킷리스트</h1>
+                        <p style="font-size: 14px; color: #666; margin-top: 10px;">${new Date().toLocaleDateString('ko-KR')} 기준</p>
+                    </div>
+                    <div id="pdfGoalsList"></div>
+                `;
+                
+                document.body.appendChild(pdfContainer);
+                
+                // 목표 리스트 생성
+                const goalsList = pdfContainer.querySelector('#pdfGoalsList');
+                const categories = {};
+                
+                // 카테고리별로 그룹화
+                currentProfile.bucketList.forEach(goal => {
+                    if (!categories[goal.category]) {
+                        categories[goal.category] = [];
+                    }
+                    categories[goal.category].push(goal);
+                });
+                
+                // 카테고리별로 렌더링
+                Object.entries(categories).forEach(([category, goals]) => {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.style.cssText = 'margin-bottom: 30px; page-break-inside: avoid;';
+                    
+                    categoryDiv.innerHTML = `
+                        <h2 style="font-size: 20px; color: #4facfe; margin-bottom: 15px; border-bottom: 2px solid #4facfe; padding-bottom: 5px;">
+                            ${getCategoryEmoji(category)} ${category}
+                        </h2>
+                    `;
+                    
+                    const goalsContainer = document.createElement('div');
+                    
+                    goals.forEach((goal, index) => {
+                        const goalDiv = document.createElement('div');
+                        goalDiv.style.cssText = `
+                            padding: 15px;
+                            margin-bottom: 10px;
+                            border: 1px solid #e0e0e0;
+                            border-radius: 8px;
+                            background: ${goal.completed ? '#f0f8ff' : '#fff'};
+                            page-break-inside: avoid;
+                        `;
+                        
+                        const completionDate = goal.completedDate ? 
+                            new Date(goal.completedDate).toLocaleDateString('ko-KR') : '';
+                        
+                        goalDiv.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div style="flex: 1;">
+                                    <h3 style="font-size: 16px; margin: 0 0 8px 0; color: #333;">
+                                        ${goal.completed ? '✅' : '⬜'} ${escapeHtml(goal.text)}
+                                    </h3>
+                                    ${goal.description ? `<p style="font-size: 14px; color: #666; margin: 0 0 8px 0;">${escapeHtml(goal.description)}</p>` : ''}
+                                    <div style="font-size: 12px; color: #999;">
+                                        ${goal.tags && goal.tags.length > 0 ? 
+                                            `<span>🏷️ ${goal.tags.map(tag => escapeHtml(tag)).join(', ')}</span> · ` : ''}
+                                        ${goal.priority ? `<span>⚡ ${goal.priority}</span> · ` : ''}
+                                        ${goal.deadline ? `<span>📅 ${new Date(goal.deadline).toLocaleDateString('ko-KR')}</span> · ` : ''}
+                                        ${goal.completed && completionDate ? `<span>✅ ${completionDate} 달성</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        goalsContainer.appendChild(goalDiv);
+                    });
+                    
+                    categoryDiv.appendChild(goalsContainer);
+                    goalsList.appendChild(categoryDiv);
+                });
+                
+                // 통계 추가
+                const stats = getAchievementStats(currentProfile.bucketList);
+                const statsDiv = document.createElement('div');
+                statsDiv.style.cssText = `
+                    margin-top: 40px;
+                    padding: 20px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    text-align: center;
+                    page-break-inside: avoid;
+                `;
+                
+                statsDiv.innerHTML = `
+                    <h2 style="font-size: 20px; margin-bottom: 15px;">📊 달성 현황</h2>
+                    <div style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+                        <div style="margin: 10px;">
+                            <div style="font-size: 24px; font-weight: bold; color: #4facfe;">${stats.total}</div>
+                            <div style="font-size: 14px; color: #666;">전체 목표</div>
+                        </div>
+                        <div style="margin: 10px;">
+                            <div style="font-size: 24px; font-weight: bold; color: #28a745;">${stats.achieved}</div>
+                            <div style="font-size: 14px; color: #666;">달성 완료</div>
+                        </div>
+                        <div style="margin: 10px;">
+                            <div style="font-size: 24px; font-weight: bold; color: #ff6b6b;">${stats.rate}%</div>
+                            <div style="font-size: 14px; color: #666;">달성률</div>
+                        </div>
+                    </div>
+                `;
+                
+                goalsList.appendChild(statsDiv);
+                
+                // HTML을 캔버스로 변환
+                const canvas = await html2canvas(pdfContainer, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                });
+                
+                // PDF 생성
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+                const imgWidth = 210; // A4 width in mm
+                const pageHeight = 297; // A4 height in mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+                
+                // 첫 페이지 추가
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                // 추가 페이지 처리
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                // PDF 다운로드
+                const fileName = `${currentProfile.name}_버킷리스트_${new Date().toISOString().split('T')[0]}.pdf`;
+                pdf.save(fileName);
+                
+                // 임시 요소 제거
+                document.body.removeChild(pdfContainer);
+                
+            } catch (error) {
+                console.error('PDF 생성 중 오류:', error);
+                alert('PDF 생성 중 오류가 발생했습니다. 다시 시도해 주세요.');
+            } finally {
+                // 로딩 제거
+                document.body.removeChild(loadingDiv);
+            }
         }
 
         // 페이지 로드 시 초기화 (에러 처리 강화)
